@@ -140,3 +140,5 @@ CORS_ALLOWED_ORIGINS = [
 
 STATIC_URL = '/static/'
 STATIC_ROOT = BASE_DIR / 'staticfiles'
+
+CSRF_TRUSTED_ORIGINS = [ 'https://railwaylast-production.up.railway.app/' ]
