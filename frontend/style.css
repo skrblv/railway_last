@@ -1,0 +1,1250 @@
+/* Basic Reset & Variables */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+:root {
+    --primary-color: #FFEADD;
+    --secondary-color: #C7D8E3;
+    --accent-color: #FCAE7C;
+    --text-color: #5D5C61;
+    --text-dark: #073B4C;
+    --white: #FFFFFF;
+    --card-bg: var(--white);
+    --border-radius: 15px;
+    --shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+    --spotify-green: #1DB954;
+    --spotify-dark: #121212;
+    --spotify-light-grey: #b3b3b3;
+    --spotify-dark-grey: #282828;
+    --spotify-progress-grey: #535353;
+}
+
+html {
+    scroll-behavior: smooth;
+    overflow-x: hidden; /* Prevent horizontal scroll on the html element */
+}
+
+body {
+    font-family: 'Poppins', sans-serif;
+    background-color: var(--primary-color);
+    color: var(--text-color);
+    line-height: 1.6;
+    padding: 20px;
+    position: relative;
+    /* overflow-x: hidden; */ /* Can be handled by html, keeping is okay */
+}
+
+/* Header */
+.top-nav {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 5%;
+    margin-bottom: 30px;
+}
+
+.top-nav .logo {
+    font-weight: bold;
+    color: var(--text-dark);
+    font-size: 1.2em;
+}
+
+.top-nav nav ul {
+    list-style: none;
+    display: flex;
+}
+
+.top-nav nav ul li {
+    margin-left: 25px;
+}
+
+.top-nav nav ul li a {
+    text-decoration: none;
+    color: var(--text-color);
+    font-weight: 600;
+    font-size: 0.9em;
+    transition: color 0.3s ease;
+}
+
+.top-nav nav ul li a:hover {
+    color: var(--accent-color);
+}
+
+.status-icons span {
+    margin-left: 10px;
+    display: inline-block;
+    width: 18px;
+    height: 18px;
+    background-color: var(--secondary-color);
+    border-radius: 50%;
+    opacity: 0.7;
+}
+
+/* Container */
+.container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 15px;
+}
+
+/* Hero Section */
+.hero {
+    display: flex;
+    gap: 30px;
+    margin-bottom: 50px;
+    align-items: flex-start;
+}
+
+.hero-text {
+    flex: 1;
+    padding-right: 20px;
+    position: relative;
+}
+
+.hero-text h1 {
+    font-size: 3.5em;
+    color: var(--text-dark);
+    line-height: 1.1;
+    margin-bottom: 15px;
+}
+
+.hero-text p {
+    margin-bottom: 25px;
+    max-width: 450px;
+}
+
+.hero-card {
+    flex: 1.5;
+    background-color: var(--card-bg);
+    border-radius: var(--border-radius);
+    box-shadow: var(--shadow);
+    overflow: hidden;
+}
+
+.hero-card .venue-image {
+    width: 3%; /* This seems very small, might be intentional or a typo */
+    margin-left: 10px;
+    margin-top: 10px;
+    overflow: hidden;
+}
+
+.hero-card .venue-image img {
+    width: 100%;
+    height: 100%;
+    display: block;
+    object-fit: cover;
+}
+
+.countdown-section {
+    padding: 20px;
+}
+
+.date-selection {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 5px;
+    margin-bottom: 10px;
+}
+
+.date-selection label {
+    color: var(--text-color);
+    font-weight: normal;
+    font-size: 0.9em;
+}
+
+#event-date-picker {
+    background: linear-gradient(to right, #fddea3, #fb7b88);
+    border: 1px solid #ccc;
+    border-radius: 20px;
+    color: white;
+    padding: 8px 15px;
+    font-family: inherit;
+    font-size: 0.9em;
+    cursor: pointer;
+    min-width: 160px;
+    transition: border-color 0.3s ease, box-shadow 0.3s ease;
+    color-scheme: light;
+    appearance: none;
+    -webkit-appearance: none;
+    -moz-appearance: textfield;
+}
+
+#event-date-picker::placeholder,
+#event-date-picker::-webkit-input-placeholder,
+#event-date-picker::-moz-placeholder,
+#event-date-picker:-ms-input-placeholder,
+#event-date-picker::-ms-input-placeholder {
+    color: #aaa;
+    opacity: 0.8;
+}
+
+#event-date-picker:focus {
+    outline: none;
+    border-color: var(--accent-color);
+    box-shadow: 0 0 0 3px rgba(252, 174, 124, 0.3);
+}
+
+#event-date-picker::-webkit-calendar-picker-indicator {
+    filter: invert(0.5) brightness(1);
+    opacity: 0.7;
+    cursor: pointer;
+    transition: opacity 0.2s ease, filter 0.2s ease;
+    margin-left: 8px;
+}
+
+#event-date-picker:hover::-webkit-calendar-picker-indicator {
+    opacity: 1;
+    filter: invert(0.3) brightness(1);
+}
+
+#set-date-btn {
+    border-radius: 20px;
+    background-color: #fddea3;
+
+    color: var(--white);
+    font-weight: bold;
+    border: none;
+    padding: 9px 18px;
+    transition: background-color 0.2s ease;
+}
+
+#set-date-btn:hover {
+    background-color: #f9a068;
+}
+
+.timer {
+    display: flex;
+    justify-content: space-around;
+    margin-bottom: 25px;
+    text-align: center;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+.time-block .number {
+    display: block;
+    font-size: 2.8em;
+    font-weight: bold;
+    color: var(--text-dark);
+    line-height: 1;
+    min-width: 40px;
+}
+
+.time-block .label {
+    font-size: 0.8em;
+    text-transform: uppercase;
+    color: var(--text-color);
+}
+
+.calendar-days {
+    display: flex;
+    justify-content: center;
+    gap: 15px;
+    margin-top: 20px;
+}
+
+.cal-day {
+    background-color: #eee;
+    padding: 8px 12px;
+    border-radius: 8px;
+    font-weight: 600;
+    min-width: 40px;
+    text-align: center;
+    border: 1px solid transparent;
+}
+
+.cal-day.highlight {
+    background-color: var(--accent-color);
+    color: var(--white);
+    font-weight: bold;
+    border-color: var(--accent-color);
+}
+
+/* Features Section */
+.features {
+    margin-bottom: 50px;
+    position: relative;
+}
+
+.features h2 {
+    color: var(--text-dark);
+    margin-bottom: 25px;
+    font-size: 1.3em;
+    padding-left: 10px;
+}
+
+.feature-cards {
+    display: flex;
+    gap: 20px; /* This gap applies between rows and columns when wrapping */
+    flex-wrap: wrap;
+    justify-content: center; /* Centers items if there's space, but width calc handles columns */
+}
+
+/* General Card Styles */
+.card {
+    background-color: var(--card-bg);
+    border-radius: var(--border-radius);
+    box-shadow: var(--shadow);
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.feature-card {
+    flex: 1; /* Allows shrinking but prefers base size */
+    min-width: 180px; /* Default minimum width */
+    max-width: 220px; /* Default maximum width */
+    min-height: 280px;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    padding: 0;
+    user-select: none;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    position: relative;
+}
+
+.card-content-wrapper {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: space-between;
+    padding: 20px;
+    transition: transform 0.3s ease-out;
+    will-change: transform;
+    text-align: center;
+    position: relative;
+    z-index: 1;
+}
+
+.card-content-wrapper.is-swiping {
+    transition: none;
+    cursor: grabbing;
+}
+
+/* Specific Card Styles */
+.venue-details {
+    background-size: cover;
+    background-position: center center;
+    background-repeat: no-repeat;
+    color: #ffffff;
+    border: none;
+    background-color: var(--secondary-color);
+}
+
+.venue-details::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(0, 0, 0, 0.45);
+    border-radius: var(--border-radius);
+    z-index: 0;
+    pointer-events: none;
+}
+
+.venue-details .venue-name,
+.venue-details .venue-date {
+    color: #ffffff;
+    text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.7);
+}
+
+.venue-details .venue-name {
+    font-size: 1.3em;
+    margin-bottom: auto;
+    padding-top: 10px;
+    width: 95%;
+    word-wrap: break-word;
+}
+
+.venue-details .venue-date {
+    margin-top: 10px;
+    font-weight: bold;
+}
+
+.choose-venue {
+    background-color: var(--primary-color);
+    border: 1px solid #f0d8c9;
+}
+
+.choose-venue .venue-header {
+    color: var(--text-dark);
+    margin-bottom: 15px;
+    font-size: 1.1em;
+    width: 95%;
+    word-wrap: break-word;
+}
+
+.choose-venue .rating span {
+    font-size: 1.3em;
+    color: #ccc;
+}
+
+.choose-venue .rating span.filled {
+    color: var(--accent-color);
+}
+
+.choose-venue .rating-text {
+    font-size: 0.85em;
+    margin: 5px 0 10px;
+    width: 95%;
+    word-wrap: break-word;
+}
+
+.choose-venue .venue-icons span {
+    display: inline-block;
+    margin: 10px 5px 0;
+    font-weight: bold;
+    color: var(--accent-color);
+}
+
+/* --- Reminders Ideas Card (Updated Checklist Styles) --- */
+.reminders-ideas {
+    background-color: var(--card-bg);
+    border: 1px solid #eee;
+}
+
+.reminders-ideas h3 {
+    color: var(--text-dark);
+    margin-bottom: 15px;
+    font-size: 1.1em;
+}
+
+.reminders-ideas .icon-feature {
+    font-size: 1.5em;
+    color: var(--accent-color);
+    margin-bottom: 10px;
+}
+
+.reminders-ideas .checklist {
+    list-style: none;
+    text-align: left;
+    font-size: 0.9em;
+    margin: 10px 0;
+    width: 100%;
+    padding-left: 5px;
+}
+
+.interactive-checklist li {
+    display: flex;
+    align-items: center;
+    margin-bottom: 8px;
+    cursor: pointer;
+    position: relative;
+}
+
+.interactive-checklist input[type="checkbox"] {
+    margin-right: 10px;
+    flex-shrink: 0;
+    accent-color: var(--accent-color);
+    width: 18px;
+    height: 18px;
+    cursor: pointer;
+}
+
+.interactive-checklist label {
+    color: var(--text-color);
+    transition: color 0.2s ease, text-decoration 0.2s ease;
+    flex-grow: 1;
+    cursor: pointer;
+}
+
+.interactive-checklist input[type="checkbox"]:checked+label {
+    text-decoration: line-through;
+    color: #999;
+}
+
+.reminders-ideas .small-text {
+    font-size: 0.85em;
+    margin-top: auto;
+    padding-top: 10px;
+}
+
+
+.cutlery {
+    background-color: var(--secondary-color);
+}
+
+.cutlery .cutlery-icons {
+    margin: auto;
+}
+
+.cutlery .cutlery-icons span {
+    font-size: 2.5em;
+    color: var(--text-dark);
+    margin: 0 10px;
+    display: inline-block;
+}
+
+.cutlery .cutlery-icons span:first-child {
+    transform: rotate(-15deg);
+}
+
+.cutlery .cutlery-icons span:last-child {
+    transform: rotate(15deg);
+}
+
+/* Venue Suggestion Card (Map Container) */
+.venue-suggestion {
+    background-color: var(--secondary-color);
+}
+
+.venue-suggestion .card-content-wrapper {
+    padding: 10px;
+    justify-content: flex-start;
+    height: 100%;
+}
+
+#venue-map {
+    width: 100%;
+    height: 100%;
+    min-height: 200px;
+    border-radius: calc(var(--border-radius) - 10px);
+    z-index: 1;
+}
+
+/* Dot Sliding Styles */
+.dots {
+    margin-top: auto;
+    padding-top: 15px;
+    width: 60px;
+    overflow: hidden;
+    position: relative;
+    margin-left: auto;
+    margin-right: auto;
+    height: 12px;
+}
+
+.dots-inner {
+    display: flex;
+    position: absolute;
+    left: 0;
+    top: 0;
+    height: 100%;
+    align-items: center;
+    transition: transform 0.3s ease-out;
+    will-change: transform;
+}
+
+.dots span {
+    display: block;
+    flex-shrink: 0;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background-color: rgba(0, 0, 0, 0.2);
+    margin: 0 4px;
+    opacity: 0.6;
+    transition: background-color 0.3s ease, opacity 0.3s ease, transform 0.3s ease;
+}
+
+.dots span.active {
+    background-color: var(--accent-color);
+    opacity: 1;
+    transform: scale(1.15);
+}
+
+.venue-details .dots span {
+    background-color: rgba(255, 255, 255, 0.4);
+    opacity: 0.5;
+}
+
+.venue-details .dots span.active {
+    background-color: rgba(255, 255, 255, 0.95);
+    opacity: 1;
+}
+
+.choose-venue .dots span {
+    background-color: rgba(0, 0, 0, 0.15);
+    opacity: 0.5;
+}
+
+.choose-venue .dots span.active {
+    background-color: var(--accent-color);
+    opacity: 1;
+}
+
+/* Leaflet Popup Styling Override */
+.leaflet-popup-content-wrapper {
+    border-radius: 8px;
+}
+
+.leaflet-popup-content {
+    font-family: 'Poppins', sans-serif;
+    color: var(--text-color);
+    font-size: 0.9em;
+    line-height: 1.5;
+}
+
+.leaflet-popup-content b {
+    color: var(--text-dark);
+}
+
+.leaflet-container a.leaflet-popup-close-button {
+    color: #aaa;
+}
+
+/* Global Reminders */
+.global-reminders {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+    z-index: 10;
+}
+
+.notification-badge {
+    background-color: var(--accent-color);
+    color: var(--white);
+    border-radius: 50%;
+    width: 35px;
+    height: 35px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-weight: bold;
+    font-size: 0.9em;
+    box-shadow: var(--shadow);
+}
+
+.global-reminders .btn-secondary {
+    background-color: var(--secondary-color);
+    color: var(--text-dark);
+    padding: 8px 15px;
+    font-size: 0.9em;
+}
+
+/* Buttons */
+.btn {
+    padding: 10px 25px;
+    border: none;
+    border-radius: 20px;
+    cursor: pointer;
+    font-weight: 600;
+    transition: background-color 0.3s ease, transform 0.2s ease;
+    font-size: 0.9em;
+}
+
+.btn-primary {
+    background-color: var(--white);
+    color: var(--text-color);
+    box-shadow: var(--shadow);
+}
+
+.btn-primary:hover {
+    background-color: #f8f8f8;
+    transform: translateY(-2px);
+}
+
+.btn-secondary {
+    background-color: var(--accent-color);
+    color: var(--white);
+}
+
+.btn-secondary:hover {
+    background-color: #f9a068;
+    transform: translateY(-2px);
+}
+
+.btn-small {
+    padding: 5px 15px;
+    font-size: 0.8em;
+}
+
+/* Phone Mockup & Music Player */
+.phone-mockup {
+    position: absolute;
+    bottom: -100px;
+    left: 0;
+    width: 200px;
+    height: 400px;
+    background-color: var(--white);
+    border: 8px solid #333;
+    border-radius: 30px;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+    padding: 15px;
+    overflow: hidden;
+}
+
+.phone-screen {
+    background-color: var(--spotify-dark);
+    color: var(--spotify-light-grey);
+    padding: 20px 15px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100%;
+    border-radius: 20px;
+    overflow: hidden;
+}
+
+.music-player {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: 100%;
+    max-width: 300px;
+    height: 100%;
+    justify-content: space-around;
+    padding: 10px 0;
+}
+
+.album-art {
+    width: 75%;
+    max-width: 180px;
+    aspect-ratio: 1 / 1;
+    border-radius: 8px;
+    object-fit: cover;
+    margin-bottom: 15px;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
+}
+
+.track-info {
+    text-align: center;
+    margin-bottom: 15px;
+    width: 90%;
+}
+
+.track-title {
+    color: #ffffff;
+    font-size: 1.1em;
+    font-weight: 600;
+    margin-bottom: 4px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.artist-name {
+    font-size: 0.9em;
+    color: var(--spotify-light-grey);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.progress-bar-container {
+    display: flex;
+    align-items: center;
+    width: 90%;
+    margin-bottom: 15px;
+    gap: 8px;
+}
+
+.time {
+    font-size: 0.7em;
+    color: var(--spotify-light-grey);
+    min-width: 28px;
+    text-align: center;
+}
+
+.progress-bar {
+    flex-grow: 1;
+    height: 5px;
+    background-color: var(--spotify-progress-grey);
+    border-radius: 3px;
+    overflow: hidden;
+    cursor: pointer;
+}
+
+.progress {
+    height: 100%;
+    background-color: var(--spotify-green);
+    border-radius: 3px;
+    transition: width 0.1s linear;
+}
+
+.controls {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 80%;
+    margin-bottom: 20px;
+    gap: 20px;
+}
+
+.control-btn {
+    background: none;
+    border: none;
+    color: var(--spotify-light-grey);
+    cursor: pointer;
+    padding: 5px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    transition: color 0.2s ease;
+}
+
+.control-btn:hover {
+    color: #ffffff;
+}
+
+.control-btn svg {
+    display: block;
+}
+
+.main-control {
+    color: #ffffff;
+}
+
+.main-control:hover {
+    transform: scale(1.1);
+}
+
+.volume-control {
+    display: flex;
+    align-items: center;
+    width: 70%;
+    gap: 10px;
+}
+
+.volume-control svg {
+    color: var(--spotify-light-grey);
+    flex-shrink: 0;
+}
+
+.volume-slider {
+    flex-grow: 1;
+    -webkit-appearance: none;
+    appearance: none;
+    width: 100%;
+    height: 5px;
+    background: var(--spotify-progress-grey);
+    border-radius: 3px;
+    outline: none;
+    cursor: pointer;
+}
+
+.volume-slider::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 14px;
+    height: 14px;
+    background: #ffffff;
+    border-radius: 50%;
+    cursor: pointer;
+    margin-top: -4.5px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+}
+
+.volume-control:hover .volume-slider::-webkit-slider-thumb {
+    background: var(--spotify-green);
+}
+
+.volume-slider::-moz-range-track {
+    width: 100%;
+    height: 5px;
+    background: var(--spotify-progress-grey);
+    border-radius: 3px;
+    cursor: pointer;
+}
+
+.volume-slider::-moz-range-thumb {
+    width: 14px;
+    height: 14px;
+    background: #ffffff;
+    border-radius: 50%;
+    border: none;
+    cursor: pointer;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+}
+
+.volume-control:hover .volume-slider::-moz-range-thumb {
+    background: var(--spotify-green);
+}
+
+@media (max-height: 400px) {
+    .music-player {
+        justify-content: flex-start;
+        gap: 10px;
+        padding: 5px 0;
+    }
+
+    .album-art,
+    .track-info,
+    .progress-bar-container,
+    .controls {
+        margin-bottom: 10px;
+    }
+}
+
+/* Decorative Elements */
+.deco {
+    position: absolute;
+    z-index: -1;
+    opacity: 0.6;
+}
+
+.flower {
+    width: 200px;
+    height: 300px;
+    top: 50px;
+    right: 10px;
+    transform: rotate(15deg);
+}
+
+/* Placeholder */
+.plate {
+    width: 180px;
+    height: 180px;
+    background-color: #F0EBE3;
+    border-radius: 50%;
+    bottom: 20px;
+    right: 50px;
+    box-shadow: inset 0 0 10px rgba(0, 0, 0, 0.05);
+}
+
+/* Placeholder */
+.plate::before {
+    content: '';
+    position: absolute;
+    width: 80px;
+    height: 50px;
+    background-color: #E4DCD3;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -70%) rotate(-10deg);
+    border-radius: 4px;
+}
+
+/* Placeholder */
+
+/* Responsive Adjustments */
+@media (max-width: 992px) {
+    .hero {
+        flex-direction: column;
+        align-items: center;
+    }
+
+    .hero-text {
+        padding-right: 0;
+        text-align: center;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+    }
+
+    .hero-text p {
+        max-width: 100%;
+    }
+
+    .hero-card {
+        width: 100%;
+        max-width: 500px;
+    }
+
+    .phone-mockup {
+        position: static;
+        margin: 30px auto 0; /* Center mockup when static */
+        width: 220px;
+        height: 440px;
+    }
+
+    .global-reminders {
+        position: static;
+        flex-direction: row;
+        justify-content: center;
+        margin-top: 20px;
+    }
+
+    .features h2 {
+        text-align: center;
+        padding-left: 0;
+    }
+}
+
+@media (max-width: 768px) {
+    .top-nav {
+        flex-direction: column;
+        gap: 10px;
+    }
+
+    .top-nav nav ul {
+        padding-left: 0;
+        justify-content: center;
+        flex-wrap: wrap;
+    }
+
+    .top-nav nav ul li {
+        margin: 5px 10px; /* Add vertical margin when wrapped */
+    }
+
+    .hero-text h1 {
+        font-size: 2.8em;
+    }
+
+    .timer {
+        gap: 15px;
+    }
+
+    .time-block .number {
+        font-size: 2.2em;
+    }
+
+    .feature-cards {
+        justify-content: center;
+    }
+    /* On tablets, feature cards might still wrap based on their min/max widths */
+}
+
+@media (max-width: 480px) {
+    body {
+        padding: 10px;
+    }
+
+    .hero-text h1 {
+        font-size: 2.2em;
+    }
+
+    .btn {
+        padding: 8px 20px;
+        font-size: 0.8em;
+    }
+
+    /* --- START: Two cards per row for phones --- */
+    .feature-card {
+        /* Each card takes up half the width minus half the gap */
+        /* The parent .feature-cards has gap: 20px */
+        flex-grow: 0; /* Prevent growing */
+        flex-shrink: 0; /* Prevent shrinking beyond basis */
+        flex-basis: calc(50% - 10px); /* 10px is half of the 20px gap */
+        max-width: calc(50% - 10px); /* Ensure max width respects the calculation */
+        min-width: unset; /* Remove the default min-width */
+        /* Removed margin-right rules - the parent's 'gap' property handles spacing */
+    }
+    /* --- END: Two cards per row for phones --- */
+
+
+    .phone-mockup {
+        width: 180px;
+        height: 360px;
+        border-width: 6px;
+        border-radius: 25px;
+        /* Ensure it's centered if static */
+        margin-left: auto;
+        margin-right: auto;
+    }
+
+    .phone-screen {
+        padding: 15px 10px;
+        border-radius: 15px;
+    }
+
+    /* Adjust global reminders positioning if needed */
+    .global-reminders {
+        /* Keep as is unless it overlaps badly */
+        /* Example adjustment if needed:
+        top: 5px;
+        right: 5px;
+        */
+    }
+}
+
+@media (max-width: 380px) {
+    /* --- START: One card per row for very small phones --- */
+    .feature-card {
+        /* Override the 2-column layout for very narrow screens */
+        flex-basis: 100%;
+        /* No need for margin overrides as gap handles spacing */
+    }
+    /* --- END: One card per row for very small phones --- */
+
+     .hero-text h1 {
+        font-size: 2em; /* Slightly smaller for very narrow screens */
+    }
+
+    .phone-mockup {
+        width: 160px; /* Even smaller if needed */
+        height: 320px;
+    }
+}
+/* ============================================================ */
+/* == THEME STYLES == */
+/* ============================================================ */
+
+/* --- Default/Positive Theme --- */
+/* Uses the variables defined in :root by default. */
+/* You could add explicit .theme-positive rules if needed, */
+/* but usually relying on :root is enough. */
+body.theme-positive {
+    /* Optional: Define explicit positive theme overrides if needed */
+    /* Example: --accent-color: #FCAE7C; */
+    transition: background-color 0.5s ease, color 0.5s ease; /* Smooth transition */
+  }
+  
+  
+  /* --- Sad/Darker Theme --- */
+  body.theme-sad {
+    /* Override root variables for the sad theme */
+    --primary-color: #353a44;     /* Darker background */
+    --secondary-color: #586070;   /* Darker secondary elements */
+    --accent-color: #8a94a8;      /* Muted accent */
+    --text-color: #c0c5cf;        /* Lighter main text */
+    --text-dark: #e8edf3;         /* Lighter headings/important text */
+    --white: #f0f0f0;             /* Off-white */
+    --card-bg: #404552;           /* Darker card background */
+    --shadow: 0 4px 15px rgba(0, 0, 0, 0.3); /* Stronger shadow */
+  
+    /* Apply transitions for smoothness */
+    transition: background-color 0.5s ease, color 0.5s ease;
+  }
+  
+  /* Override specific element styles within the sad theme */
+  
+  body.theme-sad .top-nav .logo {
+    color: var(--text-dark);
+  }
+  
+  body.theme-sad .top-nav nav ul li a {
+    color: var(--text-color);
+  }
+  body.theme-sad .top-nav nav ul li a:hover {
+    color: var(--accent-color);
+  }
+  
+  body.theme-sad .hero-text h1 {
+    color: var(--text-dark);
+  }
+  
+  body.theme-sad .btn-primary {
+    background-color: var(--secondary-color);
+    color: var(--text-dark);
+    box-shadow: var(--shadow);
+  }
+  body.theme-sad .btn-primary:hover {
+    background-color: #6a7387;
+  }
+  
+  body.theme-sad .btn-secondary {
+    background-color: var(--accent-color);
+    color: var(--primary-color); /* Darker text on muted accent */
+  }
+  body.theme-sad .btn-secondary:hover {
+    background-color: #737c8f;
+  }
+  
+  body.theme-sad .hero-card {
+    background-color: var(--card-bg);
+    box-shadow: var(--shadow);
+  }
+  
+  body.theme-sad .time-block .number {
+    color: var(--text-dark);
+  }
+  
+  body.theme-sad .cal-day {
+      background-color: var(--secondary-color);
+      color: var(--text-dark);
+      border-color: transparent;
+  }
+  body.theme-sad .cal-day.highlight {
+      background-color: var(--accent-color);
+      color: var(--primary-color);
+      border-color: var(--accent-color);
+  }
+  
+  body.theme-sad #event-date-picker {
+      background: linear-gradient(to right, #586070, #8a94a8);
+      color: var(--text-dark);
+      border-color: var(--secondary-color);
+  }
+  body.theme-sad #event-date-picker::-webkit-calendar-picker-indicator {
+      filter: invert(0.8) brightness(1);
+  }
+  body.theme-sad #set-date-btn {
+      background-color: var(--accent-color);
+      color: var(--primary-color);
+  }
+  body.theme-sad #set-date-btn:hover {
+      background-color: #737c8f;
+  }
+  
+  
+  body.theme-sad .features h2 {
+    color: var(--text-dark);
+  }
+  
+  body.theme-sad .feature-card {
+    background-color: var(--card-bg);
+    box-shadow: var(--shadow);
+  }
+  
+  /* Specific card adjustments for dark theme */
+  body.theme-sad .venue-details {
+      background-color: var(--secondary-color);
+      /* The ::before overlay might need adjustment if it's too dark/light */
+      /* background-color: rgba(20, 20, 30, 0.6); */
+  }
+  body.theme-sad .venue-details .venue-name,
+  body.theme-sad .venue-details .venue-date {
+      color: var(--text-dark); /* Make text lighter */
+      text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.5);
+  }
+  body.theme-sad .venue-details .dots span {
+      background-color: rgba(200, 205, 215, 0.4); /* Lighter dots */
+  }
+  body.theme-sad .venue-details .dots span.active {
+      background-color: rgba(230, 235, 240, 0.95);
+  }
+  
+  
+  body.theme-sad .choose-venue {
+      background-color: var(--card-bg);
+      border: 1px solid var(--secondary-color);
+  }
+  body.theme-sad .choose-venue .venue-header { color: var(--text-dark); }
+  body.theme-sad .choose-venue .rating span { color: #777; } /* Darker empty stars */
+  body.theme-sad .choose-venue .rating span.filled { color: var(--accent-color); }
+  body.theme-sad .choose-venue .venue-icons span { color: var(--accent-color); }
+  body.theme-sad .choose-venue .dots span { background-color: rgba(200, 205, 215, 0.3); }
+  body.theme-sad .choose-venue .dots span.active { background-color: var(--accent-color); }
+  
+  body.theme-sad .reminders-ideas {
+      background-color: var(--card-bg);
+      border: 1px solid var(--secondary-color);
+  }
+  body.theme-sad .reminders-ideas h3 { color: var(--text-dark); }
+  body.theme-sad .interactive-checklist label { color: var(--text-color); }
+  body.theme-sad .interactive-checklist input[type="checkbox"] { accent-color: var(--accent-color); }
+  body.theme-sad .interactive-checklist input[type="checkbox"]:checked+label { color: #888; }
+  
+  body.theme-sad .cutlery {
+      background-color: var(--secondary-color);
+  }
+  body.theme-sad .cutlery .cutlery-icons span {
+      color: var(--text-dark);
+  }
+  
+  body.theme-sad .venue-suggestion {
+      background-color: var(--card-bg); /* Make map card background consistent */
+  }
+  
+  /* Adjust Leaflet map for dark theme (optional, map tiles might be light) */
+  /* body.theme-sad #venue-map { filter: grayscale(30%) brightness(80%); } */
+  
+  body.theme-sad .global-reminders .notification-badge {
+    background-color: var(--accent-color);
+    color: var(--primary-color);
+  }
+  body.theme-sad .global-reminders .btn-secondary {
+    background-color: var(--secondary-color);
+    color: var(--text-dark);
+  }
+  
+  /* Ensure phone mockup elements contrast well */
+  body.theme-sad .phone-mockup {
+      background-color: var(--card-bg);
+      border-color: #555;
+  }
+  /* Spotify player inside already has dark theme, likely okay */
