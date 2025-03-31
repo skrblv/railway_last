@@ -1,6 +1,8 @@
 # backend/urls.py
 from django.contrib import admin
 from django.urls import path, include # Make sure 'include' is imported
+from api import views  # Добавьте этот импорт
+
 
 urlpatterns = [
     path('', views.index, name='index'), 
