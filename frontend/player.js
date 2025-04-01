@@ -770,28 +770,36 @@ function displayVenue(index) {
 
     // Define ONE handler function outside the loop/displayVenue if possible,
     // OR define it here but make it read the ID from the clicked element.
+// frontend/player.js
+
+// Find the handleCardClick function or similar logic inside displayVenue
+
+// ... inside displayVenue or handleCardClick ...
     const handleCardClick = (event) => {
-        // Use event.currentTarget to ensure we get the element the listener was attached to
         const clickedWrapper = event.currentTarget;
         console.log("Card content wrapper clicked!", clickedWrapper);
-
-        // Get the venue ID stored on the element
         const venueId = clickedWrapper.getAttribute('data-venue-id');
         console.log(`   -> Click handler fired. Reading data-venue-id: "${venueId}"`);
 
-        if (venueId) { // Check if the attribute value exists and is not empty
-            const venueDetailUrl = `venue-detail.html?id=${venueId}`;
+        if (venueId) {
+            // Change this line:
+            // const venueDetailUrl = `venue-detail.html?id=${venueId}`;
+
+            // To this: (Use the path defined in Django's urls.py)
+            const venueDetailUrl = `/venue/${venueId}/`;
+
             console.log(`   -> Attempting to open URL: ${venueDetailUrl}`);
-            const newWindow = window.open(venueDetailUrl, '_blank');
+            const newWindow = window.open(venueDetailUrl, '_blank'); // Open in new tab
             if (!newWindow || newWindow.closed || typeof newWindow.closed === 'undefined') {
                 console.warn("   -> Pop-up blocked?");
-                // alert("Please allow pop-ups for this site to view venue details.");
+                // You might want to inform the user or try navigating the current window:
+                // window.location.href = venueDetailUrl; // Navigate current tab instead
             }
         } else {
             console.warn("   -> Cannot open detail page: data-venue-id attribute missing or empty on clicked element.", clickedWrapper);
         }
     };
-
+// ... rest of the code ...
     // --- Attach/Re-attach Listeners ---
     // Remove previous listeners using the SAME function reference.
     // For this to work reliably, handleCardClick should ideally be defined *outside* displayVenue,
