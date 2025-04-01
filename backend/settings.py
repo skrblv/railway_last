@@ -25,12 +25,7 @@ SECRET_KEY = 'django-insecure-0hqqy#)-qvcs1w!$d04o=494@z$gssu0($ow%3c0+g!%q4^k$@
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = [
-    "railwaylast-production.up.railway.app",
-    "localhost",
-    "127.0.0.1",
-]
-
+ALLOWED_HOSTS = []
 
 
 # Application definition
@@ -126,7 +121,17 @@ USE_TZ = True
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/5.1/howto/static-files/
 
-STATIC_URL = 'static/'
+# Статические файлы
+STATIC_URL = '/static/'
+
+# Для разработки можно добавить:
+STATICFILES_DIRS = [
+    BASE_DIR / 'frontend',  # Путь к папке с вашими статическими файлами
+]
+
+# Медиафайлы (если они есть)
+MEDIA_URL = '/media/'
+MEDIA_ROOT = BASE_DIR / 'frontend' / 'assets'
 
 CORS_ALLOW_ALL_ORIGINS = True
 
