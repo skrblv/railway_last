@@ -131,7 +131,7 @@ STATIC_URL = '/static/'
 
 # Для разработки можно добавить:
 STATICFILES_DIRS = [
-    BASE_DIR / 'frontend',  # Путь к папке с вашими статическими файлами
+    BASE_DIR / 'frontend' / 'static',
 ]
 
 # Медиафайлы (если они есть)
