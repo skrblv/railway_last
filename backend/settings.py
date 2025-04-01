@@ -23,9 +23,9 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = 'django-insecure-0hqqy#)-qvcs1w!$d04o=494@z$gssu0($ow%3c0+g!%q4^k$@'
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = False
+DEBUG = True
 
-ALLOWED_HOSTS = ['*']
+ALLOWED_HOSTS = []
 
 
 # Application definition
@@ -59,7 +59,7 @@ ROOT_URLCONF = 'backend.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [],
+        'DIRS': [BASE_DIR / "frontend" / "assets"],  # <-- Добавляем путь к HTML-шаблонам
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -71,6 +71,7 @@ TEMPLATES = [
         },
     },
 ]
+
 
 WSGI_APPLICATION = 'backend.wsgi.application'
 
@@ -137,8 +138,3 @@ CORS_ALLOWED_ORIGINS = [
 ]
 # Or, for wide open development access (less secure):
 # CORS_ALLOW_ALL_ORIGINS = True
-
-STATIC_URL = '/static/'
-STATIC_ROOT = BASE_DIR / 'staticfiles'
-
-CSRF_TRUSTED_ORIGINS = [ 'https://railwaylast-production.up.railway.app/' ]
