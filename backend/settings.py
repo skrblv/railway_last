@@ -127,7 +127,7 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/5.1/howto/static-files/
 
 # Статические файлы
-STATIC_URL = '/static/'
+STATIC_URL = '/frontend/'
 
 # Для разработки можно добавить:
 STATICFILES_DIRS = [
@@ -135,7 +135,7 @@ STATICFILES_DIRS = [
 ]
 
 # Медиафайлы (если они есть)
-MEDIA_URL = '/media/'
+MEDIA_URL = '/assets/'
 MEDIA_ROOT = BASE_DIR / 'frontend' / 'assets'
 
 CORS_ALLOW_ALL_ORIGINS = True
