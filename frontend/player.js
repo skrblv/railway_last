@@ -14,7 +14,7 @@ let currentPlan = null; // Track the currently active plan
 const DOT_WIDTH = 8; // px
 const DOT_MARGIN = 4; // px
 const MAP_ZOOM_LEVEL = 15; // Default zoom level for the venue map
-const API_BASE_URL = "http://127.0.0.1:8000/api"; // Your backend API URL
+const API_BASE_URL = "/api";// Your backend API URL
 
 // --- Leaflet Map Variables ---
 let venueMapInstance = null; // Holds the Leaflet map instance
