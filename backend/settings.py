@@ -127,7 +127,7 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/5.1/howto/static-files/
 
 # Статические файлы
-STATIC_URL = '/frontend/'
+STATIC_URL = '/static/'
 
 # Для разработки можно добавить:
 STATICFILES_DIRS = [
