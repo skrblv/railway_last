@@ -1,4 +1,4 @@
-{% load static %} {/* <<< --- НЕОБХОДИМО ДОБАВИТЬ В САМОМ НАЧАЛЕ ФАЙЛА --- */}
+{% load static %}
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -7,15 +7,12 @@
 
     <title>Date Planin</title>
 
-    <!-- Leaflet CSS (External - не меняем) -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
      integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
      crossorigin=""/>
 
-    <!-- Your CSS - Используем тег static -->
     <link rel="stylesheet" href="{% static 'style.css' %}">
 
-    <!-- Google Fonts (External - не меняем) -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
@@ -45,14 +42,10 @@
                 <h1>Tripple Date</h1>
                 <p>Tauras me donc para na olanlamo coa b'aray nar oon aus ane al oio onile yiiio eatolie iluaioh oaej onain aor o'aen aiacio one niie ooair iu.</p>
                 <button class="btn btn-primary">Change Details</button>
-                <!-- Phone Mockup -->
                 <div class="phone-mockup">
                     <div class="phone-screen">
-                        <!-- Music Player UI Start -->
                         <div class="music-player">
-                            <!-- Используем тег static для аудио -->
                             <audio id="audio-player" src="{% static 'assets/Fifty Fifty - Cupid (Twin Version).mp3' %}" preload="metadata"></audio>
-                            <!-- Используем тег static для изображения -->
                             <img src="{% static 'assets/hq720 (1).jpg' %}" alt="Album Art" class="album-art">
                             <div class="track-info">
                                 <h3 id="track-title" class="track-title">Cupid (Twin Ver.)</h3>
@@ -83,7 +76,6 @@
                                 <input id="volume-slider" type="range" class="volume-slider" min="0" max="100" value="70" aria-label="Volume">
                             </div>
                         </div>
-                        <!-- Music Player UI End -->
                     </div>
                 </div>
             </div>
@@ -118,7 +110,6 @@
             <h2>CHOOSE VENUE</h2>
             <div class="feature-cards">
 
-                <!-- Venue Details Card (Swipeable Content, Has Dots) -->
                 <div class="card feature-card venue-details" id="venue-details-card">
                     <div class="card-content-wrapper">
                         <h3 class="venue-name">DATE DA E</h3>
@@ -129,7 +120,6 @@
                     </div>
                 </div>
 
-                <!-- Venue Suggestion Card (NOW contains the Map) -->
                 <div class="card feature-card venue-suggestion">
                      <div class="card-content-wrapper">
                         <!-- Контейнер для карты Leaflet -->
@@ -137,18 +127,14 @@
                      </div>
                 </div>
 
-                <!-- Choose Venue Card (Swipeable Content, Has Dots) -->
                 <div class="card feature-card choose-venue" id="choose-venue-card">
                     <div class="card-content-wrapper">
                        <h3 class="venue-header">VENUE DETAILS</h3>
                        <div class="rating">
-                           <!-- Возможно, здесь тоже есть изображения или иконки,
-                                если да, используйте {% static %} -->
+
                        </div>
                        <p class="rating-text small-text">View ratings & reviews</p>
                        <div class="venue-icons">
-                          <!-- Если это CSS-классы для фоновых иконок, они должны быть в style.css.
-                               Если это <img> теги, используйте {% static %} -->
                           <span class="venue-icon-1"></span> <span class="venue-icon-2"></span>
                        </div>
                        <div class="dots">
@@ -157,11 +143,9 @@
                    </div>
                </div>
 
-                <!-- Reminders Ideas Card -->
                 <div class="card feature-card reminders-ideas">
                     <div class="card-content-wrapper">
                        <h3>REMINDERS IDEAS</h3>
-                       <!-- Если ★ - это изображение, используйте {% static %} -->
                        <span class="icon-feature">★</span>
                        <ul class="checklist interactive-checklist">
                            <li>
@@ -181,11 +165,9 @@
                    </div>
                </div>
 
-                 <!-- Cutlery Card -->
                  <div class="card feature-card cutlery">
                      <div class="card-content-wrapper">
                          <div class="cutlery-icons">
-                            <!-- Если это изображения, используйте {% static %} -->
                             <span>🍽️</span>
                             <span>🔪</span>
                          </div>
@@ -193,30 +175,23 @@
                 </div>
             </div>
 
-             <!-- Global Reminders -->
             <div class="global-reminders" id="reminders">
                  <span class="notification-badge">98</span>
                  <button class="btn btn-secondary">REMINDERS</button>
             </div>
         </section>
 
-        <!-- Карта теперь внутри карточки, этот раздел можно удалить, если он больше не нужен -->
-        <!-- <section class="map-feature" id="map-section"> ... </section> -->
 
     </main>
 
-    <!-- Декоративные элементы -->
-    <!-- Если это <img> теги, используйте {% static %}. Если это CSS-фоны, настройте в style.css -->
     <div class="deco flower"></div>
     <div class="deco plate"></div>
 
 
-    <!-- Leaflet JavaScript (External - не меняем) -->
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
      integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
      crossorigin=""></script>
 
-    <!-- Your Custom JavaScript - Используем тег static -->
     <script src="{% static 'script.js' %}"></script>
 
 </body>
