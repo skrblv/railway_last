@@ -14,5 +14,13 @@ class PlanViewSet(viewsets.ReadOnlyModelViewSet): # Provides list and detail vie
 def home(request):
     return render(request, "index.html")  # Загружаем HTML-файл
 
+def venue_detail_view(request, pk):
+    """
+    Renders the venue detail HTML page.
+    The actual data fetching happens client-side via JavaScript.
+    The 'pk' parameter is captured from the URL but not used directly here.
+    """
+    return render(request, "venue-detail.html")
+
 # Note: We use ReadOnlyModelViewSet because our frontend currently only needs to READ data.
 # If you needed to CREATE/UPDATE/DELETE from the frontend API later, you'd use ModelViewSet.
