@@ -64,7 +64,7 @@ ROOT_URLCONF = 'backend.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [BASE_DIR / "frontend" / "assets"],  # <-- Добавляем путь к HTML-шаблонам
+        'DIRS': [BASE_DIR / "frontend"],  # <-- Добавляем путь к HTML-шаблонам
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
