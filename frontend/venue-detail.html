@@ -1,3 +1,4 @@
+{% load static %} 
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -5,20 +6,16 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Venue Details</title>
 
-    <!-- Leaflet CSS (for the map) -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
      integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
      crossorigin=""/>
 
-    <!-- Link your main stylesheet (optional, or create a specific one) -->
-    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="{% static 'style.css' %}"> {/* <<< --- USE STATIC TAG --- */}
 
-    <!-- Add some basic inline styles for layout (or move to CSS file) -->
     <style>
         body {
-            font-family: 'Poppins', sans-serif;
             padding: 30px;
-            background-color: #f8f9fa; /* Light background */
+            background-color: #f8f9fa; 
             color: #333;
         }
         .venue-container {
@@ -35,6 +32,7 @@
             object-fit: cover;
             border-radius: 10px;
             margin-bottom: 20px;
+            background-color: #eee; 
         }
         #venue-name-detail {
             color: #073B4C;
@@ -52,30 +50,31 @@
             width: 100%;
             border-radius: 10px;
             margin-top: 25px;
+            background-color: #e0e0e0;
         }
-        .loading, .error-message {
+        .loading, .error-message, .map-error 
              text-align: center;
              padding: 40px;
              font-size: 1.2em;
              color: #888;
         }
+        .map-error { color: #c00; }
     </style>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
 </head>
 <body>
 
     <div class="venue-container" id="venue-detail-content">
-        <!-- Content will be loaded here by JavaScript -->
         <div class="loading">Loading venue details...</div>
     </div>
 
-    
-
-    <!-- Leaflet JavaScript -->
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
      integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
      crossorigin=""></script>
 
-    <!-- Your new JavaScript file for this page -->
-    <script src="venue-detail.js" defer></script>
+    <!-- Your new JavaScript file for this page using static tag -->
+    <script src="{% static 'venue-detail.js' %}" defer></script> 
 </body>
 </html>
