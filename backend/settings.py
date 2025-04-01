@@ -134,6 +134,9 @@ STATICFILES_DIRS = [
     BASE_DIR / 'frontend' / 'static',
 ]
 
+STATIC_ROOT = BASE_DIR / 'staticfiles'
+
+
 # Медиафайлы (если они есть)
 MEDIA_URL = '/assets/'
 MEDIA_ROOT = BASE_DIR / 'frontend' / 'assets'
