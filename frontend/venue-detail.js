@@ -917,56 +917,59 @@ document.addEventListener('DOMContentLoaded', () => {
     /**
      * Главная функция инициализации страницы.
      */
-    async function initializePage() {
-        console.log("Initializing venue detail page...");
-        const urlParams = new URLSearchParams(window.location.search);
-        const venueId = urlParams.get('id'); // Получаем ID из URL
+async function initializePage() {
+    console.log("Initializing venue detail page...");
+    
+    // Получаем путь из URL и извлекаем ID из последней части пути
+    const pathname = window.location.pathname; 
+    const venueId = pathname.split('/').filter(Boolean).pop(); // Извлекаем ID из пути
 
-        if (!venueId) { // Если ID нет
-            console.error("Venue ID missing from URL query parameters.");
-            displayError("ID места не указан в URL."); // Показываем ошибку
-            return; // Прекращаем инициализацию
-        }
-        console.log("Venue ID found:", venueId);
-
-        setLoading(true); // Показываем лоадер
-
-        try {
-            setupAudioListeners(); // Настраиваем базовые слушатели аудио один раз
-
-            // Параллельно загружаем детали места и список планов
-            await Promise.all([
-                fetchVenueDetails(venueId),
-                fetchPlans()
-            ]);
-
-            console.log("Initial data fetching complete.");
-
-            createPlanSwitcherButtons(); // Создаем кнопки планов
-
-            // Применяем начальный/дефолтный план (обычно Plan A)
-            if (currentPlan && audioPlayer) {
-                console.log("Applying initial/default plan:", currentPlan.name || currentPlan.id);
-                wasPlayingBeforeApply = false; // Не воспроизводим автоматически при первой загрузке
-                applyPlan(currentPlan);
-            } else if (!currentPlan && fetchedPlanData.length > 0) { // Планы есть, но дефолтный не найден
-                 console.warn("Plans were fetched, but no default plan (Plan A or first) was found. No initial plan applied.");
-                 setPlayerDefaultState(); // Сбрасываем плеер
-            }
-            else { // Планов нет или нет плеера
-                console.warn("No initial plan to apply (either no plans fetched or player missing).");
-                 if (audioPlayer) {
-                     setPlayerDefaultState("Планов нет"); // Обновляем плеер, если он есть
-                 }
-            }
-        } catch (error) { // Ловим ошибки из fetchVenueDetails или fetchPlans
-            console.error("Initialization Error during data fetch:", error);
-            // Сообщение об ошибке уже должно быть показано внутри displayError
-        } finally {
-            setLoading(false); // Всегда убираем лоадер в конце
-            console.log("Page initialization process finished.");
-        }
+    if (!venueId) { // Если ID нет
+        console.error("Venue ID missing from URL path.");
+        displayError("ID места не указан в URL."); // Показываем ошибку
+        return; // Прекращаем инициализацию
     }
+
+    console.log("Venue ID found:", venueId);
+
+    setLoading(true); // Показываем лоадер
+
+    try {
+        setupAudioListeners(); // Настроим базовые слушатели аудио один раз
+
+        // Параллельно загружаем детали места и список планов
+        await Promise.all([
+            fetchVenueDetails(venueId),
+            fetchPlans()
+        ]);
+
+        console.log("Initial data fetching complete.");
+
+        createPlanSwitcherButtons(); // Создаем кнопки планов
+
+        // Применяем начальный/дефолтный план (обычно Plan A)
+        if (currentPlan && audioPlayer) {
+            console.log("Applying initial/default plan:", currentPlan.name || currentPlan.id);
+            wasPlayingBeforeApply = false; // Не воспроизводим автоматически при первой загрузке
+            applyPlan(currentPlan);
+        } else if (!currentPlan && fetchedPlanData.length > 0) { // Планы есть, но дефолтный не найден
+            console.warn("Plans were fetched, but no default plan (Plan A or first) was found. No initial plan applied.");
+            setPlayerDefaultState(); // Сбрасываем плеер
+        }
+        else { // Планов нет или нет плеера
+            console.warn("No initial plan to apply (either no plans fetched or player missing).");
+            if (audioPlayer) {
+                setPlayerDefaultState("Планов нет"); // Обновляем плеер, если он есть
+            }
+        }
+    } catch (error) { // Ловим ошибки из fetchVenueDetails или fetchPlans
+        console.error("Initialization Error during data fetch:", error);
+        // Сообщение об ошибке уже должно быть показано внутри displayError
+    } finally {
+        setLoading(false); // Всегда убираем лоадер в конце
+        console.log("Page initialization process finished.");
+    }
+}
 
     // --- Запуск инициализации ---
     initializePage();
