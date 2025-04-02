@@ -1,3 +1,4 @@
+{% load static %}
 <!DOCTYPE html>
 <html lang="ru">
 <head>
@@ -11,7 +12,7 @@
     <link rel="stylesheet" href="https://unpkg.com/leaflet-routing-machine@3.2.12/dist/leaflet-routing-machine.css" />
     <link rel="stylesheet" href="https://unpkg.com/leaflet-control-geocoder/dist/Control.Geocoder.css" />
 
-    <link rel="stylesheet" href="venue-detail.css">
+    <link rel="stylesheet" href={% venue-detail.css %}>
     <!-- <link rel="stylesheet" href="style.css"> -->
 
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -97,6 +98,6 @@
 
 
 <!-- Ваш JavaScript файл -->
-<script src="venue-detail.js" defer></script>
+<script src={% venue-detail.js %} defer></script>
 </body>
 </html>
