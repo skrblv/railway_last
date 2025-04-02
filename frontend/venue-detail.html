@@ -29,6 +29,11 @@
   .sticker-girl-phone {
       background-image: url("{% static 'assets/sticker-girl-phone.png' %}");
   }
+    body.theme-plan-b-green {
+        font-family: var(--font-plan-b) !important;
+        background: url("{% static 'assets/bg.png' %}") center/cover no-repeat fixed, var(--dv-b-fallback-color);
+        color: var(--dv-b-text-color);
+    }
 </style>
 
 <div class="page-wrapper">
