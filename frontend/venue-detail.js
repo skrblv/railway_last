@@ -16,7 +16,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- Constants & Config ---
     // Константы для URL API, ключей хранения, путей к ресурсам и имен CSS классов
-    const API_BASE_URL = 'http://127.0.0.1:8000/api'; // Базовый URL вашего бэкенда (замените, если нужно)
+    const API_BASE_URL = '/api'; // Базовый URL вашего бэкенда (замените, если нужно)
     const ROUTING_STORAGE_KEY = 'venueRouteWaypoints_v2'; // Ключ для сохранения маршрута в Local Storage
     // !!! ПРОВЕРЬТЕ ПУТИ К ФАЙЛАМ ОТНОСИТЕЛЬНО HTML !!!
     const VENUE_SIGN_IMAGE_URL = 'assets/heart.png'; // Путь к изображению "вывески" места
