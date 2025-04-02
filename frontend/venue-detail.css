@@ -1,0 +1,399 @@
+/* venue-detail.css */
+
+/* --- Fonts --- */
+@import url('https://fonts.googleapis.com/css2?family=Quicksand:wght@400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap');
+/* Theme-specific fonts (Plan B uses Montserrat, Plan A uses Quicksand by default) */
+@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700&display=swap');
+
+/* --- Base Variables & Reset --- */
+:root {
+    /* Default Theme (Plan A - Light/Positive) - Based on first CSS example */
+    --font-plan-a: 'Quicksand', sans-serif;
+    --font-player: 'Poppins', sans-serif; /* Shared player font */
+    --dv-a-bg-gradient-start: #e1d4f0;
+    --dv-a-bg-gradient-end: #c8d3f5;
+    --dv-a-container-bg: rgba(255, 255, 255, 0.96);
+    --dv-a-container-border-color: rgba(255, 255, 255, 0.85);
+    --dv-a-sticker-shadow: rgba(150, 160, 190, 0.25);
+    --dv-a-text-color: #5a5a7a;
+    --dv-a-text-light: #8a95b5;
+    --dv-a-header-text-color: #8b6a9b;
+    --dv-a-header-bg: #d8cff0; /* More distinct header bg */
+    --dv-a-accent-purple: #b8a4d4;
+    --dv-a-accent-blue: #a7b7e0;
+    --dv-a-accent-pink: #f7c4d6;
+    --dv-a-star-color: #a97aaa; /* Different star color */
+    --dv-a-button-bg-start: #b8c0e0;
+    --dv-a-button-bg-end: #d1d8f0;
+    --dv-a-button-text: #4a4a6a; /* Darker text for better contrast */
+    --dv-a-button-shadow: rgba(150, 160, 190, 0.4);
+    --dv-a-button-border: rgba(138, 152, 194, 0.5);
+    --dv-a-player-bg-color: #511f23; /* Dark Red for Plan A player */
+    --dv-a-player-text-color: #f0f0f0;
+    --dv-a-player-icon-color: #d0d0d0;
+    --dv-a-player-icon-hover-color: #ffffff;
+    --dv-sticker-outline-offset: 5px; /* Shared sticker outline size */
+
+    /* Theme B (Dark/Green) - Based on second CSS example */
+    --font-plan-b: 'Montserrat', sans-serif;
+    /* !!! ПРОВЕРЬТЕ ПУТЬ К ФОНУ !!! */
+    --dv-b-bg-image: url('assets/bg.png'); /* Use the correct path */
+    --dv-b-fallback-color: #2a4d2a; /* Dark green fallback */
+    --dv-b-text-color: #f0f0f0;
+    --dv-b-text-muted: #a0a0a0;
+    --dv-b-header-text-color: #ffffff;
+    --dv-b-header-bg: rgba(0, 0, 0, 0.65);
+    --dv-b-container-bg: rgba(10, 10, 10, 0.8);
+    --dv-b-container-border-color: rgba(0, 0, 0, 0.5);
+    --dv-b-accent-color: #33ff33; /* Bright green */
+    --dv-b-star-color: #ccffcc;
+    --dv-b-player-bg-color: #101010; /* Very dark player */
+    --dv-b-player-text-color: #f0f0f0; /* Shared */
+    --dv-b-player-icon-color: #d0d0d0; /* Shared */
+    --dv-b-player-icon-hover-color: #ffffff; /* Shared */
+    --dv-b-sticker-shadow: rgba(0, 0, 0, 0.6);
+
+    /* SVG Stickers (Use one consistent set) */
+    /* --- PASTE ALL --svg-sticker-... VARIABLES HERE --- */
+     --svg-sticker-music-notes-top: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 60 55'%3E%3Cpath stroke='%234a4a6a' stroke-width='1.5' fill='%23f7c4d6' d='M25 48 V 12 C 25 6 30 4 35 8 C 40 12 42 18 42 22 C 42 26 40 30 36 32 C 45 30 50 35 50 42 C 50 48 45 52 40 52 C 35 52 32 48 32 45 M35 8 C 30 10 28 15 28 20'/%3E%3Ccircle cx='18' cy='15' r='6' fill='%23f7c4d6' stroke='%234a4a6a' stroke-width='1.5'/%3E%3Cellipse cx='40' cy='47' rx='9' ry='7' fill='%23f7c4d6' stroke='%234a4a6a' stroke-width='1.5'/%3E%3C/svg%3E");
+    --svg-sticker-girl-phone: url('./assets/sticker-girl-phone.png');
+    --svg-sticker-face-small: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 35 35'%3E%3Ccircle cx='17.5' cy='17.5' r='16' fill='%23FFB6C1' stroke='%234a4a6a' stroke-width='1'/%3E%3Ccircle cx='12' cy='14' r='2.5' fill='%234a4a6a'/%3E%3Ccircle cx='23' cy='14' r='2.5' fill='%234a4a6a'/%3E%3Cpath d='M 12 23 Q 17.5 28 23 23' stroke='%234a4a6a' stroke-width='1.5' fill='none'/%3E%3C/svg%3E");
+    --svg-sticker-computer: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 90 85'%3E%3Crect x='2' y='2' width='86' height='66' rx='12' fill='%23E0E8F5' stroke='%234a4a6a' stroke-width='1.5'/%3E%3Crect x='10' y='10' width='70' height='48' rx='5' fill='%23BDE4A8' stroke='%234a4a6a' stroke-width='1'/%3E%3Cpath fill='%23A7B7E0' d='M11 57 h 68 v -15 C 70 35 55 42 45 40 C 35 38 25 35 11 42 Z'/%3E%3Cpath fill='%23FFFFFF' d='M 20 35 Q 25 30 30 35 T 40 35 T 50 35 T 60 35 T 70 35' opacity='0.7'/%3E%3Ccircle cx='60' cy='25' r='5' fill='%23FFFACD'/%3E%3Crect x='30' y='68' width='30' height='8' fill='%23D0DBE8' stroke='%234a4a6a' stroke-width='1'/%3E%3Cellipse cx='75' cy='78' rx='12' ry='7' fill='%23E0E8F5' stroke='%234a4a6a' stroke-width='1'/%3E%3Cpath d='M75 78 v -10 h 5' stroke='%234a4a6a' stroke-width='1' fill='none'/%3E%3C/svg%3E");
+    --svg-sticker-flower: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 60 70'%3E%3Cpath d='M30 68 Q 35 50 40 35 Q 45 20 30 5' stroke='%2377dd77' stroke-width='4' fill='none' stroke-linecap='round'/%3E%3Cpath d='M40 35 Q 55 40 50 55 Z' fill='%2377dd77' stroke='%234a4a6a' stroke-width='1'/%3E%3Cg transform='translate(30 18) rotate(0)'%3E%3Cellipse cx='0' cy='-10' rx='6' ry='8' fill='%23A7B7E0' stroke='%234a4a6a' stroke-width='1'/%3E%3Cellipse cx='8' cy='-6' rx='6' ry='8' fill='%23A7B7E0' stroke='%234a4a6a' stroke-width='1' transform='rotate(72)'/%3E%3Cellipse cx='5' cy='8' rx='6' ry='8' fill='%23A7B7E0' stroke='%234a4a6a' stroke-width='1' transform='rotate(144)'/%3E%3Cellipse cx='-5' cy='8' rx='6' ry='8' fill='%23A7B7E0' stroke='%234a4a6a' stroke-width='1' transform='rotate(216)'/%3E%3Cellipse cx='-8' cy='-6' rx='6' ry='8' fill='%23A7B7E0' stroke='%234a4a6a' stroke-width='1' transform='rotate(288)'/%3E%3C/g%3E%3Ccircle cx='30' cy='18' r='5' fill='%23FFFACD' stroke='%234a4a6a' stroke-width='1'/%3E%3Cg transform='translate(50 60) scale(0.5)'%3E%3Ccircle cx='0' cy='0' r='8' fill='%23FFB6C1' stroke='%234a4a6a' stroke-width='1.5'/%3E%3Ccircle cx='0' cy='0' r='3' fill='%23FFFFFF'/%3E%3C/g%3E%3C/svg%3E");
+    --svg-sticker-bunny-boombox-top: url("./assets/bunny.png");
+    --svg-sticker-flip-phone-pink: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 60 95'%3E%3Cg transform='rotate(-10 30 47.5)'%3E%3Crect x='5' y='45' width='50' height='48' rx='8' fill='%23f7c4d6' stroke='%234a4a6a' stroke-width='1.5'/%3E%3Cg fill='%23E0E8F5' stroke='%234a4a6a' stroke-width='0.5'%3E%3Ccircle cx='18' cy='58' r='5'/%3E%3Ccircle cx='30' cy='58' r='5'/%3E%3Ccircle cx='42' cy='58' r='5'/%3E%3Ccircle cx='18' cy='70' r='5'/%3E%3Ccircle cx='30' cy='70' r='5'/%3E%3Ccircle cx='42' cy='70' r='5'/%3E%3Ccircle cx='18' cy='82' r='5'/%3E%3Ccircle cx='30' cy='82' r='5'/%3E%3Ccircle cx='42' cy='82' r='5'/%3E%3C/g%3E%3Crect x='5' y='2' width='50' height='45' rx='8' fill='%23f7c4d6' stroke='%234a4a6a' stroke-width='1.5'/%3E%3Crect x='12' y='8' width='36' height='28' rx='3' fill='%23FFFFFF' stroke='%234a4a6a' stroke-width='1'/%3E%3Cg fill='%23FFFACD' opacity='0.8'%3E%3Cpath d='M20 15 l2 4 l4 1 l-3 3 l1 4 l-4 -2 l-4 2 l1 -4 l-3 -3 l4 -1 Z'/%3E%3Cpath transform='translate(30 20) scale(0.8)' d='M0 -5 L 1.18 -1.54 L 4.76 -1.54 L 1.9 0.59 L 2.94 4.05 L 0 2 L -2.94 4.05 L -1.9 0.59 L -4.76 -1.54 L -1.18 -1.54 Z'/%3E%3C/g%3E%3Crect x='3' y='41' width='54' height='8' fill='%23E8A0BF' stroke='%234a4a6a' stroke-width='1'/%3E%3C/g%3E%3Cg fill='%23FFFACD' transform='translate(50 50)'%3E%3Cpath transform='scale(0.6) rotate(15)' d='M0 -5 L 1.18 -1.54 L 4.76 -1.54 L 1.9 0.59 L 2.94 4.05 L 0 2 L -2.94 4.05 L -1.9 0.59 L -4.76 -1.54 L -1.18 -1.54 Z'/%3E%3Cpath transform='translate(5 -8) scale(0.8) rotate(-10)' d='M0 -5 L 1.18 -1.54 L 4.76 -1.54 L 1.9 0.59 L 2.94 4.05 L 0 2 L -2.94 4.05 L -1.9 0.59 L -4.76 -1.54 L -1.18 -1.54 Z'/%3E%3Cpath transform='translate(-8 -15) scale(0.5) rotate(30)' d='M0 -5 L 1.18 -1.54 L 4.76 -1.54 L 1.9 0.59 L 2.94 4.05 L 0 2 L -2.94 4.05 L -1.9 0.59 L -4.76 -1.54 L -1.18 -1.54 Z'/%3E%3C/g%3E%3C/svg%3E");
+    --svg-sticker-swirl: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Cpath fill='none' stroke='%23B8A4D4' stroke-width='10' stroke-linecap='round' stroke-dasharray='1 18' d='M 50,50 m -40,0 a 40,40 0 1,0 80,0 a 35,35 0 1,1 -70,0 a 30,30 0 1,0 60,0 a 25,25 0 1,1 -50,0 a 20,20 0 1,0 40,0 a 15,15 0 1,1 -30,0'/%3E%3C/svg%3E");
+    --svg-sticker-flip-phone-green: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 55 90'%3E%3Cg transform='rotate(5 27.5 45)'%3E%3Crect x='2' y='43' width='51' height='45' rx='8' fill='%23C8E6D7' stroke='%234a4a6a' stroke-width='1.5'/%3E%3Cg fill='%23FFFFFF' stroke='%234a4a6a' stroke-width='0.5'%3E%3Crect x='8' y='50' width='10' height='8' rx='2'/%3E%3Crect x='22.5' y='50' width='10' height='8' rx='2'/%3E%3Crect x='37' y='50' width='10' height='8' rx='2'/%3E%3Crect x='8' y='62' width='10' height='8' rx='2'/%3E%3Crect x='22.5' y='62' width='10' height='8' rx='2'/%3E%3Crect x='37' y='62' width='10' height='8' rx='2'/%3E%3Crect x='8' y='74' width='10' height='8' rx='2'/%3E%3Crect x='22.5' y='74' width='10' height='8' rx='2'/%3E%3Crect x='37' y='74' width='10' height='8' rx='2'/%3E%3C/g%3E%3Crect x='2' y='2' width='51' height='43' rx='8' fill='%23C8E6D7' stroke='%234a4a6a' stroke-width='1.5'/%3E%3Crect x='10' y='8' width='35' height='27' rx='3' fill='%23E0F0E8' stroke='%234a4a6a' stroke-width='1'/%3E%3Crect x='0' y='38' width='55' height='8' fill='%23A0D4B7' stroke='%234a4a6a' stroke-width='1'/%3E%3C/g%3E%3C/svg%3E");
+    --svg-sticker-boombox-bottom: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 75 60'%3E%3Crect x='2' y='5' width='71' height='50' rx='8' fill='%23A7B7E0' stroke='%234a4a6a' stroke-width='1.5'/%3E%3Crect x='10' y='10' width='20' height='18' fill='%234a4a6a' rx='3'/%3E%3Ccircle cx='20' cy='19' r='7' fill='%23333'/%3E%3Crect x='45' y='10' width='20' height='18' fill='%234a4a6a' rx='3'/%3E%3Ccircle cx='55' cy='19' r='7' fill='%23333'/%3E%3Crect x='34' y='12' width='7' height='6' fill='%23f7c4d6'/%3E%3Crect x='10' y='32' width='55' height='18' rx='5' fill='%23FFFACD' stroke='%234a4a6a' stroke-width='1'/%3E%3Crect x='15' y='35' width='8' height='12' fill='%23E0E8F5'/%3E%3Crect x='27' y='35' width='8' height='12' fill='%23E0E8F5'/%3E%3Crect x='39' y='35' width='8' height='12' fill='%23E0E8F5'/%3E%3Crect x='51' y='35' width='8' height='12' fill='%23E0E8F5'/%3E%3Cpath d='M30 5 h 15 l 5 -5 h -25 Z' fill='%238A95B5' stroke='%234a4a6a' stroke-width='1'/%3E%3C/svg%3E");
+}
+
+/* --- Base Styles --- */
+html { box-sizing: border-box; }
+*, *:before, *:after { box-sizing: inherit; }
+
+body {
+    /* Default to Plan A styles */
+    font-family: var(--font-plan-a);
+    padding: 0; margin: 0;
+    background: linear-gradient(135deg, var(--dv-a-bg-gradient-start) 0%, var(--dv-a-bg-gradient-end) 100%);
+    background-image: url('data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="4" height="4" viewBox="0 0 4 4"%3E%3Cpath fill="%23ffffff" fill-opacity="0.1" d="M1 3h1v1H1V3zm2-2h1v1H3V1z"%3E%3C/path%3E%3C/svg%3E'),
+                      linear-gradient(135deg, var(--dv-a-bg-gradient-start) 0%, var(--dv-a-bg-gradient-end) 100%);
+    background-attachment: fixed;
+    color: var(--dv-a-text-color);
+    line-height: 1.6; min-height: 100vh;
+    overflow-x: hidden; position: relative;
+    padding-bottom: 90px; /* Space for sticky player */
+    /* Transitions for smooth theme changes */
+    transition: background 0.5s ease, color 0.5s ease, font-family 0.3s ease;
+}
+
+.page-wrapper { position: relative; max-width: 960px; margin: 0 auto; padding: 20px; padding-top: 130px; }
+
+/* --- Header --- */
+.page-header {
+    background-color: var(--dv-a-header-bg); /* Plan A default */
+    border-radius: 25px;
+    padding: 12px 35px;
+    text-align: center;
+    position: absolute;
+    top: 40px; left: 50%;
+    transform: translateX(-50%);
+    z-index: 10;
+    width: max-content; max-width: 80%;
+    /* Plan A default shadow/border */
+    box-shadow: 0 0 0 var(--dv-sticker-outline-offset) var(--dv-a-container-border-color), 2px 8px 15px var(--dv-a-sticker-shadow);
+    border: 1px solid rgba(255, 255, 255, 0.5);
+    transition: background-color 0.5s ease, box-shadow 0.5s ease, border-color 0.5s ease;
+}
+
+#venue-name-header {
+    color: var(--dv-a-header-text-color); /* Plan A default */
+    margin: 0; font-size: 2.6em; font-weight: 700;
+    letter-spacing: 1px; text-shadow: 1px 1px 2px rgba(255, 255, 255, 0.7);
+    transition: color 0.5s ease, text-shadow 0.5s ease;
+}
+
+/* --- Main Content --- */
+.venue-container {
+    max-width: 600px; margin: 0 auto;
+    background-color: var(--dv-a-container-bg); /* Plan A default */
+    padding: 30px; border-radius: 25px;
+    /* Plan A default shadow/border */
+    box-shadow: 0 0 0 var(--dv-sticker-outline-offset) var(--dv-a-container-border-color), 5px 10px 25px var(--dv-a-sticker-shadow);
+    border: 1px solid rgba(255, 255, 255, 0.4);
+    position: relative; z-index: 5; min-height: 300px;
+    transition: background-color 0.5s ease, border-color 0.5s ease, box-shadow 0.5s ease;
+}
+.venue-images { display: flex; gap: 15px; margin-bottom: 25px; justify-content: center; align-items: center; flex-wrap: wrap; }
+.venue-images img { max-width: 48%; height: auto; max-height: 140px; object-fit: contain; border-radius: 10px; background-color: #f0f2f8; padding: 4px; border: 1px solid var(--dv-a-accent-blue); box-shadow: 2px 2px 8px rgba(0,0,0,0.08); transition: background-color 0.5s ease, border-color 0.5s ease; }
+#venue-sign-image { object-fit: contain; background-color: transparent; border: none; box-shadow: none; padding: 0; }
+.venue-info { margin-bottom: 25px; padding-left: 10px; }
+#venue-type { font-size: 1.3em; font-weight: 600; color: var(--dv-a-header-text-color); margin-top: 0; margin-bottom: 8px; transition: color 0.5s ease; }
+.rating-stars { font-size: 1.4em; color: var(--dv-a-star-color); letter-spacing: 3px; margin-bottom: 15px; transition: color 0.5s ease; }
+#venue-description { font-size: 0.95em; color: var(--dv-a-text-color); line-height: 1.7; transition: color 0.5s ease; }
+.no-map-message { font-style: italic; color: var(--dv-a-text-light); text-align: center; margin-top: 20px; padding: 10px; background-color: rgba(230, 235, 245, 0.5); border-radius: 8px; transition: color 0.5s ease, background-color 0.5s ease; display: none; }
+
+/* --- Map Controls & Container --- */
+#map-section-wrapper {}
+.map-controls-embedded { text-align: center; margin-bottom: 15px; padding-top: 15px; border-top: 1px dashed var(--dv-a-accent-blue); transition: border-color 0.5s ease; display: none; }
+.map-controls-embedded #set-start-button { padding: 10px 25px; font-size: 1em; font-weight: 600; font-family: var(--font-plan-a); cursor: pointer; background: linear-gradient(145deg, var(--dv-a-button-bg-start), var(--dv-a-button-bg-end)); color: var(--dv-a-button-text); border: none; border-radius: 20px; margin-bottom: 8px; transition: all 0.25s ease, background 0.5s ease, color 0.5s ease, border-color 0.5s ease; box-shadow: 0 4px 8px var(--dv-a-button-shadow); text-shadow: 1px 1px 1px rgba(0,0,0,0.1); border-bottom: 3px solid var(--dv-a-button-border); opacity: 0.6; }
+.map-controls-embedded #set-start-button:not(:disabled) { opacity: 1; }
+.map-controls-embedded #set-start-button:disabled { background: #d8dde8; color: #99aabb; cursor: not-allowed; box-shadow: 0 1px 2px rgba(150, 160, 190, 0.2); transform: none; border-bottom: 1px solid rgba(138, 152, 194, 0.3); }
+.map-controls-embedded #set-start-button:not(:disabled):hover { background: linear-gradient(145deg, #a8b8e0, #c0c8e8); transform: translateY(-2px); box-shadow: 0 6px 12px var(--dv-a-button-shadow); border-bottom-color: rgba(138, 152, 194, 0.7); }
+.map-controls-embedded #set-start-button:not(:disabled):active { transform: translateY(1px); box-shadow: 0 2px 4px var(--dv-a-button-shadow); border-bottom-width: 1px; }
+.map-controls-embedded #set-start-button.confirmed { animation: pulse 0.5s ease-out; }
+@keyframes pulse { 0%{transform:scale(1) translateY(0)} 50%{transform:scale(1.05) translateY(-1px)} 100%{transform:scale(1) translateY(0)} }
+.map-controls-embedded .map-instructions { font-size: 0.85em; color: var(--dv-a-text-light); margin-top: 5px; margin-bottom: 0; font-style: italic; transition: color 0.5s ease; }
+#venue-map-embedded { height: 350px; width: 100%; border-radius: 15px; border: 2px solid var(--dv-a-accent-blue); background-color: #eef2f9; box-shadow: inset 0 0 8px rgba(0, 0, 0, 0.08); margin-top: 15px; transition: border-color 0.5s ease, background-color 0.5s ease; display: none; }
+
+/* --- Stickers (Base Style & Positioning) --- */
+.sticker { position: absolute; background-size: contain; background-repeat: no-repeat; z-index: 20; /* Default filter for Plan A */ filter: drop-shadow(0px 0px var(--dv-sticker-outline-offset) var(--dv-a-container-border-color)) drop-shadow(2px 4px 6px var(--dv-a-sticker-shadow)); opacity: 1; transform: scale(1); transition: opacity 0.4s ease-out, transform 0.4s ease-out, filter 0.5s ease; pointer-events: auto; }
+/* Individual Sticker Positioning */
+.sticker-music-notes-top { width: 60px; height: 55px; background-image: var(--svg-sticker-music-notes-top); top: 20px; left: 15%; }
+.sticker-girl-phone { width: 150px; height: 200px; background-image: var(--svg-sticker-girl-phone); top: 180px; left: 5%; transform: rotate(-10deg); }
+.sticker-face-small { width: 35px; height: 35px; background-image: var(--svg-sticker-face-small); top: 300px; left: 14%; }
+.sticker-computer { width: 90px; height: 85px; background-image: var(--svg-sticker-computer); bottom: 100px; left: 8%; }
+.sticker-flower { width: 60px; height: 70px; background-image: var(--svg-sticker-flower); bottom: 80px; left: 22%; }
+.sticker-bunny-boombox-top { width: 120px; height: 100px; background-image: var(--svg-sticker-bunny-boombox-top); top: 50px; right: 16%; }
+.sticker-flip-phone-pink { width: 60px; height: 95px; background-image: var(--svg-sticker-flip-phone-pink); top: 200px; right: 10%; }
+.sticker-swirl { width: 40px; height: 40px; background-image: var(--svg-sticker-swirl); top: 300px; right: 15%; }
+.sticker-flip-phone-green { width: 55px; height: 90px; background-image: var(--svg-sticker-flip-phone-green); bottom: 100px; right: 12%; }
+.sticker-boombox-bottom { width: 75px; height: 60px; background-image: var(--svg-sticker-boombox-bottom); bottom: 100px; right: 1%; z-index: 6; transform: rotate(8deg); } /* Adjusted bottom */
+
+/* --- Leaflet --- */
+.leaflet-control, .leaflet-routing-container, .leaflet-control-geocoder { border-radius: 12px !important; box-shadow: 0 4px 10px var(--dv-a-sticker-shadow) !important; border: 1px solid rgba(200, 210, 230, 0.6) !important; background-color: rgba(252, 253, 255, 0.96) !important; transition: background-color 0.5s ease, border-color 0.5s ease, box-shadow 0.5s ease; }
+.leaflet-routing-container, .leaflet-routing-alternatives-container, .leaflet-control-geocoder-form input, .leaflet-popup-content { font-family: var(--font-plan-a) !important; color: var(--dv-a-text-color) !important; transition: color 0.5s ease, font-family 0.3s ease;}
+.leaflet-control-geocoder-form input { border-radius: 8px !important; padding: 8px 12px !important; border: 1px solid #d0d5e0 !important; background-color: #fff !important; }
+.leaflet-control-geocoder-icon { background-image: url(https://unpkg.com/leaflet-control-geocoder/dist/images/geocoder.png); background-size: 18px 18px; border-radius: 50% !important; }
+.leaflet-popup-content-wrapper { border-radius: 12px !important; background: rgba(250, 251, 255, 0.98) !important; box-shadow: 0 4px 12px var(--dv-a-sticker-shadow) !important; padding: 8px !important; transition: background-color 0.5s ease, box-shadow 0.5s ease; }
+.leaflet-popup-content { font-size: 0.9em; margin: 10px 15px !important; line-height: 1.5; }
+.leaflet-popup-content b { color: var(--dv-a-header-text-color); font-weight: 600; transition: color 0.5s ease;}
+.leaflet-popup-tip { background: rgba(250, 251, 255, 0.98) !important; box-shadow: none !important; border: none !important; transition: background-color 0.5s ease; }
+.leaflet-routing-line { stroke: var(--dv-a-accent-purple) !important; stroke-opacity: 0.85 !important; stroke-width: 7px !important; stroke-linecap: round !important; stroke-linejoin: round !important; transition: stroke 0.5s ease; }
+.leaflet-routing-alt line { stroke: var(--dv-a-text-light) !important; stroke-opacity: 0.7 !important; stroke-width: 6px !important; stroke-dasharray: 6, 6 !important; transition: stroke 0.5s ease; }
+.pulsating-marker { background-color: var(--dv-a-accent-pink); border-radius: 50%; box-shadow: 0 0 0 rgba(247, 196, 214, 0.6); animation: pulsate-a 1.5s ease-out infinite; border: 1px solid rgba(255,255,255,0.8); width: 16px; height: 16px; }
+@keyframes pulsate-a { 0%{transform:scale(1);box-shadow:0 0 0 0 rgba(247, 196, 214, 0.6)} 70%{transform:scale(1);box-shadow:0 0 0 12px rgba(247, 196, 214, 0)} 100%{transform:scale(1);box-shadow:0 0 0 0 rgba(247, 196, 214, 0)} }
+@keyframes pulsate-b { 0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(51, 255, 51, 0.6); } 70% { transform: scale(1); box-shadow: 0 0 0 12px rgba(51, 255, 51, 0); } 100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(51, 255, 51, 0); } }
+
+/* --- Loading & Error --- */
+.loading, .error-message { text-align: center; padding: 60px 30px; font-size: 1.1em; border-radius: 15px; margin: 20px auto; color: var(--dv-a-text-light); font-style: italic; background-color: rgba(255, 255, 255, 0.6); min-height: 100px; display: flex; align-items: center; justify-content: center; transition: color 0.5s ease, background-color 0.5s ease, border-color 0.5s ease; }
+.error-message { color: #a12a36; background-color: #f8d7da; border: 1px solid #f5c6cb; font-weight: 500; font-style: normal; box-shadow: 0 2px 5px rgba(211, 147, 153, 0.3); }
+
+/* --- Sticky Music Player --- */
+.sticky-music-player { position: fixed; bottom: 10px; left: 50%; transform: translateX(-50%); width: 95%; max-width: 500px; background-color: var(--dv-a-player-bg-color); /* Default: Plan A */ color: var(--dv-a-player-text-color); border-radius: 8px; padding: 8px 15px; display: flex; align-items: center; gap: 15px; z-index: 1000; box-shadow: 0 -3px 15px rgba(0, 0, 0, 0.2); font-family: var(--font-player); transition: background-color 0.5s ease, color 0.5s ease; }
+.sticky-album-art { width: 40px; height: 40px; border-radius: 4px; object-fit: cover; flex-shrink: 0; background-color: #333; }
+.sticky-track-info { flex-grow: 1; display: flex; flex-direction: column; overflow: hidden; white-space: nowrap; font-size: 0.85em; line-height: 1.3; }
+.sticky-track-title { font-weight: 600; text-overflow: ellipsis; overflow: hidden; }
+.sticky-artist-name { font-size: 0.9em; color: #bdc3c7; /* Default light grey */ text-overflow: ellipsis; overflow: hidden; transition: color 0.5s ease; }
+.sticky-controls { display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
+.sticky-control-btn { background: none; border: none; color: var(--dv-a-player-icon-color); cursor: pointer; padding: 5px; display: flex; align-items: center; justify-content: center; transition: color 0.2s ease; }
+.sticky-control-btn:hover { color: var(--dv-a-player-icon-hover-color); }
+.sticky-control-btn svg { display: block; }
+
+/* --- Plan Switcher Buttons --- */
+.plan-switcher-container-detail { text-align: center; padding: 15px 0; margin-bottom: 10px; position: relative; z-index: 6; }
+.plan-switcher-container-detail .btn-switch-plan { margin: 0 6px; padding: 8px 16px; border: 1px solid transparent; border-radius: 20px; cursor: pointer; font-weight: 600; transition: background-color 0.3s ease, transform 0.2s ease, color 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease; font-size: 0.9em; /* Default: Plan A style */ background-color: var(--dv-a-accent-purple); color: white; box-shadow: 0 2px 5px rgba(0,0,0,0.15); }
+.plan-switcher-container-detail .btn-switch-plan:hover { background-color: var(--dv-a-header-text-color); transform: translateY(-1px); box-shadow: 0 4px 8px rgba(0,0,0,0.2); }
+
+/* =============================================== */
+/* == THEME DEFINITIONS ========================== */
+/* =============================================== */
+
+/* --- Theme A (Light/Positive) --- */
+/* This theme uses the default styles defined above */
+/* We use '.theme-plan-a-sad' class name as per JS, but apply light styles */
+body.theme-plan-a-sad {
+    /* Styles are already set by the default body rules using --dv-a-... variables */
+    font-family: var(--font-plan-a); /* Ensure correct font */
+}
+/* Ensure elements revert correctly if coming from Plan B */
+body.theme-plan-a-sad .page-header { background-color: var(--dv-a-header-bg); box-shadow: 0 0 0 var(--dv-sticker-outline-offset) var(--dv-a-container-border-color), 2px 8px 15px var(--dv-a-sticker-shadow); border-color: rgba(255, 255, 255, 0.5); }
+body.theme-plan-a-sad #venue-name-header { color: var(--dv-a-header-text-color); text-shadow: 1px 1px 2px rgba(255, 255, 255, 0.7); }
+body.theme-plan-a-sad .venue-container { background-color: var(--dv-a-container-bg); box-shadow: 0 0 0 var(--dv-sticker-outline-offset) var(--dv-a-container-border-color), 5px 10px 25px var(--dv-a-sticker-shadow); border-color: rgba(255, 255, 255, 0.4); }
+body.theme-plan-a-sad #venue-type { color: var(--dv-a-header-text-color); }
+body.theme-plan-a-sad .rating-stars { color: var(--dv-a-star-color); }
+body.theme-plan-a-sad #venue-description { color: var(--dv-a-text-color); }
+body.theme-plan-a-sad .venue-images img { background-color: #f0f2f8; border-color: var(--dv-a-accent-blue); }
+body.theme-plan-a-sad #venue-sign-image { background-color: transparent; border: none; }
+body.theme-plan-a-sad .no-map-message { color: var(--dv-a-text-light); background-color: rgba(230, 235, 245, 0.5); }
+body.theme-plan-a-sad .map-controls-embedded { border-top-color: var(--dv-a-accent-blue); }
+body.theme-plan-a-sad .map-controls-embedded #set-start-button { background: linear-gradient(145deg, var(--dv-a-button-bg-start), var(--dv-a-button-bg-end)); color: var(--dv-a-button-text); border-bottom-color: var(--dv-a-button-border); text-shadow: 1px 1px 1px rgba(0,0,0,0.1); box-shadow: 0 4px 8px var(--dv-a-button-shadow); }
+body.theme-plan-a-sad .map-controls-embedded #set-start-button:not(:disabled):hover { background: linear-gradient(145deg, #a8b8e0, #c0c8e8); border-bottom-color: rgba(138, 152, 194, 0.7); box-shadow: 0 6px 12px var(--dv-a-button-shadow); }
+body.theme-plan-a-sad .map-controls-embedded #set-start-button:disabled { background: #d8dde8; color: #99aabb; border-bottom: 1px solid rgba(138, 152, 194, 0.3); box-shadow: 0 1px 2px rgba(150, 160, 190, 0.2); }
+body.theme-plan-a-sad .map-controls-embedded .map-instructions { color: var(--dv-a-text-light); }
+body.theme-plan-a-sad #venue-map-embedded { border-color: var(--dv-a-accent-blue); background-color: #eef2f9; }
+/* Leaflet Plan A */
+body.theme-plan-a-sad .leaflet-control, body.theme-plan-a-sad .leaflet-routing-container, body.theme-plan-a-sad .leaflet-control-geocoder { background-color: rgba(252, 253, 255, 0.96) !important; border-color: rgba(200, 210, 230, 0.6) !important; box-shadow: 0 4px 10px var(--dv-a-sticker-shadow) !important; }
+body.theme-plan-a-sad .leaflet-routing-container, body.theme-plan-a-sad .leaflet-routing-alternatives-container, body.theme-plan-a-sad .leaflet-control-geocoder-form input, body.theme-plan-a-sad .leaflet-popup-content { font-family: var(--font-plan-a) !important; color: var(--dv-a-text-color) !important; }
+body.theme-plan-a-sad .leaflet-control-geocoder-form input { background-color: #fff !important; border-color: #d0d5e0 !important; }
+body.theme-plan-a-sad .leaflet-popup-content-wrapper { background: rgba(250, 251, 255, 0.98) !important; box-shadow: 0 4px 12px var(--dv-a-sticker-shadow) !important; }
+body.theme-plan-a-sad .leaflet-popup-content b { color: var(--dv-a-header-text-color); }
+body.theme-plan-a-sad .leaflet-popup-tip { background: rgba(250, 251, 255, 0.98) !important; }
+body.theme-plan-a-sad .leaflet-routing-line { stroke: var(--dv-a-accent-purple) !important; }
+body.theme-plan-a-sad .leaflet-routing-alt line { stroke: var(--dv-a-text-light) !important; }
+body.theme-plan-a-sad .pulsating-marker { background-color: var(--dv-a-accent-pink); box-shadow: 0 0 0 rgba(247, 196, 214, 0.6); animation-name: pulsate-a; }
+body.theme-plan-a-sad .loading, body.theme-plan-a-sad .error-message { color: var(--dv-a-text-light); background-color: rgba(255, 255, 255, 0.6); border: none; }
+body.theme-plan-a-sad .error-message { color: #a12a36; background-color: #f8d7da; border: 1px solid #f5c6cb; box-shadow: 0 2px 5px rgba(211, 147, 153, 0.3); }
+body.theme-plan-a-sad .plan-switcher-container-detail .btn-switch-plan { background-color: var(--dv-a-accent-purple); color: white; box-shadow: 0 2px 5px rgba(0,0,0,0.15); }
+body.theme-plan-a-sad .plan-switcher-container-detail .btn-switch-plan:hover { background-color: var(--dv-a-header-text-color); box-shadow: 0 4px 8px rgba(0,0,0,0.2); }
+body.theme-plan-a-sad .sticky-music-player { background-color: var(--dv-a-player-bg-color); color: var(--dv-a-player-text-color); }
+body.theme-plan-a-sad .sticky-artist-name { color: #bdc3c7; }
+body.theme-plan-a-sad .sticky-control-btn { color: var(--dv-a-player-icon-color); }
+body.theme-plan-a-sad .sticky-control-btn:hover { color: var(--dv-a-player-icon-hover-color); }
+/* Stickers visible for Plan A */
+body.theme-plan-a-sad .sticker {
+    opacity: 1;
+    pointer-events: auto;
+    transform: scale(1);
+    filter: drop-shadow(0px 0px var(--dv-sticker-outline-offset) var(--dv-a-container-border-color)) drop-shadow(2px 4px 6px var(--dv-a-sticker-shadow));
+    transition: opacity 0.4s ease-out, transform 0.4s ease-out, filter 0.5s ease;
+}
+
+
+/* --- Theme B (Dark/Green) --- */
+body.theme-plan-b-green {
+    font-family: var(--font-plan-b) !important;
+    background: var(--dv-b-bg-image) center/cover no-repeat fixed, var(--dv-b-fallback-color);
+    color: var(--dv-b-text-color);
+}
+/* Apply theme variables to specific elements */
+body.theme-plan-b-green .page-header { background-color: var(--dv-b-header-bg); box-shadow: 0 0 0 var(--dv-sticker-outline-offset) var(--dv-b-container-border-color), 2px 8px 15px var(--dv-b-sticker-shadow); border-color: rgba(0, 0, 0, 0.4); }
+body.theme-plan-b-green #venue-name-header { color: var(--dv-b-header-text-color); text-shadow: 1px 1px 3px rgba(0,0,0,0.7); }
+body.theme-plan-b-green .venue-container { background-color: var(--dv-b-container-bg); box-shadow: 0 0 0 var(--dv-sticker-outline-offset) var(--dv-b-container-border-color), 5px 10px 25px var(--dv-b-sticker-shadow); border-color: rgba(0, 0, 0, 0.3); }
+body.theme-plan-b-green #venue-type { color: var(--dv-b-header-text-color); }
+body.theme-plan-b-green .rating-stars { color: var(--dv-b-star-color); }
+body.theme-plan-b-green #venue-description { color: var(--dv-b-text-color); }
+body.theme-plan-b-green .venue-images img { background-color: #151515; border-color: var(--dv-b-accent-color); }
+body.theme-plan-b-green #venue-sign-image { background-color: transparent; border: none; }
+body.theme-plan-b-green .no-map-message { color: var(--dv-b-text-muted); background-color: rgba(20, 20, 20, 0.6); }
+body.theme-plan-b-green .map-controls-embedded { border-top-color: var(--dv-b-accent-color); }
+body.theme-plan-b-green .map-controls-embedded #set-start-button { background: linear-gradient(145deg, var(--dv-b-accent-color), #22cc22); color: #001a00; border-bottom-color: rgba(0, 150, 0, 0.7); text-shadow: none; box-shadow: 0 4px 8px rgba(0, 50, 0, 0.3); border: 1px solid rgba(255,255,255,0.1); }
+body.theme-plan-b-green .map-controls-embedded #set-start-button:not(:disabled):hover { background: linear-gradient(145deg, #44ff44, #33dd33); box-shadow: 0 6px 12px rgba(0, 70, 0, 0.35); }
+body.theme-plan-b-green .map-controls-embedded #set-start-button:disabled { background: #224422; color: #557755; border-bottom: 1px solid rgba(0,0,0,0.3); box-shadow: none; }
+body.theme-plan-b-green .map-controls-embedded .map-instructions { color: var(--dv-b-text-muted); }
+body.theme-plan-b-green #venue-map-embedded { border-color: var(--dv-b-accent-color); background-color: #1a1a1a; }
+/* Leaflet Theme B */
+body.theme-plan-b-green .leaflet-control, body.theme-plan-b-green .leaflet-routing-container, body.theme-plan-b-green .leaflet-control-geocoder { background-color: rgba(15, 25, 15, 0.96) !important; border-color: rgba(50, 100, 50, 0.6) !important; box-shadow: 0 4px 10px rgba(0, 0, 0, 0.4) !important; }
+body.theme-plan-b-green .leaflet-routing-container, body.theme-plan-b-green .leaflet-routing-alternatives-container, body.theme-plan-b-green .leaflet-control-geocoder-form input, body.theme-plan-b-green .leaflet-popup-content { font-family: var(--font-plan-b) !important; color: var(--dv-b-text-muted) !important; }
+body.theme-plan-b-green .leaflet-control-geocoder-form input { background-color: #111 !important; border-color: #335533 !important; color: var(--dv-b-text-color) !important; }
+body.theme-plan-b-green .leaflet-popup-content-wrapper { background: rgba(5, 15, 5, 0.98) !important; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5) !important; }
+body.theme-plan-b-green .leaflet-popup-content b { color: var(--dv-b-header-text-color); }
+body.theme-plan-b-green .leaflet-popup-tip { background: rgba(5, 15, 5, 0.98) !important; }
+body.theme-plan-b-green .leaflet-routing-line { stroke: var(--dv-b-accent-color) !important; stroke-opacity: 0.9 !important; }
+body.theme-plan-b-green .leaflet-routing-alt line { stroke: #669966 !important; stroke-opacity: 0.7 !important; }
+body.theme-plan-b-green .pulsating-marker { background-color: var(--dv-b-accent-color); box-shadow: 0 0 0 rgba(51, 255, 51, 0.6); animation-name: pulsate-b; }
+/* Loading/Error Theme B */
+body.theme-plan-b-green .loading, body.theme-plan-b-green .error-message { color: var(--dv-b-text-muted); background-color: rgba(10, 10, 10, 0.7); border: 1px solid rgba(50, 50, 50, 0.5); }
+body.theme-plan-b-green .error-message { color: #ff6666; background-color: rgba(40, 10, 10, 0.8); border-color: rgba(150, 50, 50, 0.6); }
+/* Plan Switcher Theme B */
+body.theme-plan-b-green .plan-switcher-container-detail .btn-switch-plan { background-color: var(--dv-b-accent-color); color: #001a00; box-shadow: 0 2px 5px rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.1); }
+body.theme-plan-b-green .plan-switcher-container-detail .btn-switch-plan:hover { background-color: #44ff44; box-shadow: 0 4px 8px rgba(0,0,0,0.35); }
+/* Player Theme B */
+body.theme-plan-b-green .sticky-music-player { background-color: var(--dv-b-player-bg-color); color: var(--dv-b-player-text-color); }
+body.theme-plan-b-green .sticky-artist-name { color: #99bb99; }
+body.theme-plan-b-green .sticky-control-btn { color: var(--dv-b-player-icon-color); }
+body.theme-plan-b-green .sticky-control-btn:hover { color: var(--dv-b-player-icon-hover-color); }
+/* Hide stickers for Theme B */
+body.theme-plan-b-green .sticker {
+    opacity: 0 !important;
+    pointer-events: none !important;
+    transform: scale(0.8) rotate(-5deg) !important;
+    transition: opacity 0.4s ease-out, transform 0.4s ease-out !important;
+}
+
+/* --- Fallback (if no theme class applied) --- */
+/* Should default to Plan A styles */
+body:not(.theme-plan-a-sad):not(.theme-plan-b-green) {
+    /* Inherits Plan A styles defined in body {} */
+}
+body:not(.theme-plan-a-sad):not(.theme-plan-b-green) .sticky-music-player {
+    background-color: var(--dv-a-player-bg-color);
+    color: var(--dv-a-player-text-color);
+}
+body:not(.theme-plan-a-sad):not(.theme-plan-b-green) .sticker {
+     /* Inherits default sticker styles */
+     opacity: 1;
+     pointer-events: auto;
+     transform: scale(1);
+     filter: drop-shadow(0px 0px var(--dv-sticker-outline-offset) var(--dv-a-container-border-color)) drop-shadow(2px 4px 6px var(--dv-a-sticker-shadow));
+}
+
+
+/* =============================================== */
+/* == RESPONSIVENESS ============================= */
+/* =============================================== */
+
+@media (max-width: 768px) { /* Tablet */
+    body { padding-bottom: 80px; }
+    .page-wrapper { padding-top: 110px; padding-left: 15px; padding-right: 15px; }
+    #venue-name-header { font-size: 2em; }
+    .venue-container { padding: 20px; max-width: calc(100% - 40px); }
+    .venue-images img { max-width: 60%; max-height: 120px; }
+    #venue-map-embedded { height: 300px; }
+
+    /* Sticker Adjustments */
+    /* Default/Plan A filter */
+    body.theme-plan-a-sad .sticker,
+    body:not(.theme-plan-a-sad):not(.theme-plan-b-green) .sticker {
+       filter: drop-shadow(0px 0px calc(var(--dv-sticker-outline-offset) * 0.7)) var(--dv-a-container-border-color) drop-shadow(1px 2px 4px var(--dv-a-sticker-shadow));
+    }
+    /* Plan B sticker hiding */
+     body.theme-plan-b-green .sticker {
+        opacity: 0 !important; pointer-events: none !important; transform: scale(0.8) rotate(-5deg) !important;
+    }
+    /* Reposition/Resize Stickers */
+    .sticker-music-notes-top { width: 40px; height: 35px; top: 15px; left: 10%;}
+    .sticker-girl-phone { width: 100px; height: 140px; top: 150px; left: 2%; }
+    .sticker-face-small { width: 25px; height: 25px; top: 280px; left: 10%;}
+    .sticker-computer { width: 70px; height: 65px; bottom: 90px; left: 5%; }
+    .sticker-flower { width: 45px; height: 50px; bottom: 90px; left: 20%; }
+    .sticker-bunny-boombox-top { width: 90px; height: 70px; top: 45px; right: 5%; }
+    .sticker-flip-phone-pink { width: 45px; height: 70px; top: 180px; right: 5%; }
+    .sticker-swirl { width: 30px; height: 30px; top: 260px; right: 10%; }
+    .sticker-flip-phone-green { width: 45px; height: 70px; bottom: 90px; right: 5%; }
+    .sticker-boombox-bottom { width: 60px; height: 50px; bottom: 90px; right: 1%;}
+}
+
+@media (max-width: 480px) { /* Phone */
+     body { padding-bottom: 70px; }
+     .page-wrapper { padding-top: 100px; }
+     #venue-name-header { font-size: 1.7em; }
+     .page-header { padding: 10px 20px; border-radius: 15px;}
+     .venue-container { padding: 15px; border-radius: 20px;}
+     #venue-type { font-size: 1.1em; }
+     .rating-stars { font-size: 1.2em; }
+     #venue-description { font-size: 0.9em; }
+     .map-controls-embedded #set-start-button { padding: 8px 18px; font-size: 0.9em; }
+     #venue-map-embedded { height: 250px; }
+     .venue-images img { max-width: 80%; }
+
+     /* Player */
+    .sticky-music-player { padding: 6px 10px; gap: 8px; bottom: 5px; width: calc(100% - 10px); max-width: none; }
+    .sticky-album-art { width: 35px; height: 35px; }
+    .sticky-track-info { font-size: 0.8em; }
+    .sticky-controls { gap: 5px; }
+    .sticky-control-btn svg { width: 20px; height: 20px; }
+    .sticky-control-btn.btn-play-pause svg { width: 24px; height: 24px; }
+    .sticky-music-player .btn-device, .sticky-music-player .btn-add { display: none; }
+
+     /* Sticker Adjustments */
+     /* Hide specific stickers permanently */
+     .sticker-face-small, .sticker-swirl, .sticker-flower, .sticker-boombox-bottom { display: none !important; }
+     /* Adjust filters for remaining stickers based on theme */
+     body.theme-plan-a-sad .sticker:not(.sticker-face-small):not(.sticker-swirl):not(.sticker-flower):not(.sticker-boombox-bottom),
+     body:not(.theme-plan-a-sad):not(.theme-plan-b-green) .sticker:not(.sticker-face-small):not(.sticker-swirl):not(.sticker-flower):not(.sticker-boombox-bottom) {
+        filter: drop-shadow(0px 0px calc(var(--dv-sticker-outline-offset) * 0.6)) var(--dv-a-container-border-color) drop-shadow(1px 1px 3px var(--dv-a-sticker-shadow));
+     }
+     /* Theme B sticker hiding */
+     body.theme-plan-b-green .sticker:not(.sticker-face-small):not(.sticker-swirl):not(.sticker-flower):not(.sticker-boombox-bottom) {
+        opacity: 0 !important; pointer-events: none !important; transform: scale(0.8) rotate(-5deg) !important;
+     }
+     /* Adjust remaining stickers position/size */
+     .sticker-music-notes-top { width: 30px; height: 25px; top: 10px; left: 5%;}
+     .sticker-girl-phone { width: 70px; height: 90px; top: 140px; left: 1%; }
+     .sticker-computer { width: 50px; height: 45px; bottom: 75px; left: 2%; }
+     .sticker-bunny-boombox-top { width: 90px; height: 65px; top: 35px; right: 2%; }
+     .sticker-flip-phone-pink { width: 35px; height: 55px; top: 160px; right: 2%; }
+     .sticker-flip-phone-green { width: 35px; height: 55px; bottom: 75px; right: 2%; }
+}
