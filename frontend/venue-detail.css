@@ -39,7 +39,6 @@
     --font-plan-b: 'Montserrat', sans-serif;
     /* !!! ПРОВЕРЬТЕ ПУТЬ К ФОНУ !!! */
     
-    --dv-b-bg-image: url("{% static 'assets/bg.png' %}"); /* Use the correct path */
     
     --dv-b-fallback-color: #2a4d2a; /* Dark green fallback */
     --dv-b-text-color: #f0f0f0;
@@ -258,7 +257,6 @@ body.theme-plan-a-sad .sticker {
 /* --- Theme B (Dark/Green) --- */
 body.theme-plan-b-green {
     font-family: var(--font-plan-b) !important;
-    background: var(--dv-b-bg-image) center/cover no-repeat fixed, var(--dv-b-fallback-color);
     color: var(--dv-b-text-color);
 }
 /* Apply theme variables to specific elements */
