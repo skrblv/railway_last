@@ -12,6 +12,4 @@ urlpatterns = [
     path('', TemplateView.as_view(template_name='index.html'), name='home'),  # Главная страница
 
 
-    # Динамический маршрут для деталей места
-    path('venue/<int:pk>/', api_views.venue_detail_view, name='venue-detail'),  # Добавьте этот путь
 ]
