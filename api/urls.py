@@ -12,4 +12,6 @@ router.register(r'venues', VenueViewSet, basename='venue') # URL prefix: /api/ve
 # The API URLs are now determined automatically by the router.
 urlpatterns = [
     path('', include(router.urls)),
+    path('venue/<int:pk>/', api_views.venue_detail_view, name='venue-detail'),
+
 ]
