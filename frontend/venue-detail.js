@@ -39,6 +39,47 @@ document.addEventListener('DOMContentLoaded', () => {
     // == Helper & UI Functions ===================================
     // ============================================================
 
+        async function initializePage() {
+        console.log("Initializing venue detail page...");
+
+        // --- ПОЛУЧАЕМ ID ИЗ АТРИБУТА HTML ---
+        const venueId = document.body.dataset.venueId;
+        console.log("[Init] Venue ID from data attribute:", venueId);
+        // ---------------------------------
+
+        if (!venueId && venueId !== 0) { // Проверяем, есть ли ID
+            displayError("ID места не был передан на страницу.");
+            return;
+        }
+
+        setLoading(true);
+        setPlayerDefaultState("Загрузка...");
+
+        try {
+            setupAudioListeners();
+            // --- ЗАПРАШИВАЕМ ДАННЫЕ ИЗ API, ИСПОЛЬЗУЯ ПОЛУЧЕННЫЙ ID ---
+            await fetchVenueDetails(venueId); // fetchVenueDetails остался без изменений
+            // -------------------------------------------------
+            console.log("Initial venue data fetching complete.");
+            createThemeSwitcherButtons();
+
+            if (currentVenueData && audioPlayer) {
+                console.log("Applying initial 'positive' theme.");
+                wasPlayingBeforeApply = false;
+                applyThemeAndAudio('positive');
+            } else {
+                console.warn("Cannot apply initial theme.");
+                if (!currentVenueData) { setPlayerDefaultState("Данные места не загружены"); if (playerElement) playerElement.style.display = 'none'; }
+            }
+        } catch (error) {
+            console.error("Initialization Error:", error);
+            if (playerElement) playerElement.style.display = 'none';
+        } finally {
+            setLoading(false);
+            console.log("Page initialization finished.");
+        }
+    }
+
     function formatTime(seconds) {
         if (isNaN(seconds) || seconds < 0) seconds = 0;
         const minutes = Math.floor(seconds / 60);
