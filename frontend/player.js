@@ -72,12 +72,12 @@ function updatePlayPauseIconState() {
 
 function navigateToVenueDetail(venueId) {
     console.log("[Nav] navigateToVenueDetail called with ID:", venueId);
-    // Allow 0 as a valid ID, but check for null/undefined/empty string
     if (venueId === null || venueId === undefined || venueId === '') {
         console.warn("[Nav] Cannot navigate: venueId is missing or invalid:", venueId);
         return;
     }
-    const targetUrl = `${VENUE_DETAIL_BASE_PATH}?id=${venueId}`;
+    const targetUrl = `${VENUE_DETAIL_BASE_PATH}${venueId}/`; // Добавляем ID и завершающий слэш
+    // --------------------------
     console.log("[Nav] Attempting to navigate to:", targetUrl);
     try {
         window.location.href = targetUrl;
@@ -85,6 +85,7 @@ function navigateToVenueDetail(venueId) {
         console.error("[Nav] Error during navigation attempt:", e);
     }
 }
+
 
 // =========================================================================
 // == API Fetching Functions
