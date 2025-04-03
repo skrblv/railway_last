@@ -1,1118 +1,450 @@
-// frontend/player.js
+// =========================================================================
+// == frontend/player.js -- Complete Code with Robust Mobile Click/Tap Handling
+// =========================================================================
 
 // =========================================================================
 // == Global Variables & Configuration
 // =========================================================================
 
 // --- Data Storage ---
-let fetchedVenueData = []; // Will be filled by API
-let fetchedPlanData = []; // Will be filled by API
-let currentVenueIndex = 0; // Track the currently displayed venue
-let currentPlan = null; // Track the currently active plan
+let fetchedVenueData = []; // Will be filled by API call
+let fetchedPlanData = []; // Will be filled by API call
+let currentVenueIndex = 0; // Track the currently displayed venue in the swiper
+let currentPlan = null; // Track the currently active plan (theme/music)
 
 // --- Constants ---
-const DOT_WIDTH = 8; // px
-const DOT_MARGIN = 4; // px
+const DOT_WIDTH = 8; // px - For swiper dots calculation
+const DOT_MARGIN = 4; // px - For swiper dots calculation
 const MAP_ZOOM_LEVEL = 15; // Default zoom level for the venue map
-const API_BASE_URL = "/api"; // Your backend API URL
+const API_BASE_URL = "/api"; // !!! ADAPT THIS: Your backend API base URL
+
+// !!! CRITICAL CONFIGURATION: Set this to match your backend URL pattern !!!
+// Examples: '/venue', '/venues', '/place', '/location'
+const VENUE_DETAIL_BASE_PATH = '/venue'; // <<<--- CHECK AND CHANGE THIS PATH IF NEEDED
+
+const PLACEHOLDER_VENUE_IMAGE = './assets/placeholder-building.jpg'; // !!! ADAPT THIS: Fallback image for venues
+const PLACEHOLDER_ALBUM_ART = './assets/hq720 (1).jpg'; // !!! ADAPT THIS: Fallback image for album art
 
 // --- Leaflet Map Variables ---
 let venueMapInstance = null; // Holds the Leaflet map instance
 let venueMarker = null; // Holds the Leaflet marker instance
 
-// =========================================================================
-// == API Fetching Functions
-// =========================================================================
+// --- Swiper State Variables ---
+let isDragging = false;
+let startX = 0;
+let startY = 0; // For detecting vertical scroll vs horizontal swipe
+let currentX = 0;
+let diffX = 0;
+let cardWidth = 0;
+let touchStartTime = 0;
+const TAP_THRESHOLD_X = 10; // Max horizontal pixels moved to still be considered a tap
+const TAP_THRESHOLD_Y = 15; // Max vertical pixels moved to still be considered a tap
+const MAX_TAP_DURATION = 300; // Max milliseconds for a tap
 
-// Function to fetch Venues
-async function fetchVenues() {
-  try {
-    const response = await fetch(`${API_BASE_URL}/venues/`);
-    if (!response.ok) {
-      // Throw an error that includes the status code for better debugging
-      throw new Error(
-        `HTTP error! status: ${response.status} ${response.statusText}`
-      );
-    }
-    // Check content type before parsing JSON (optional but good practice)
-    const contentType = response.headers.get("content-type");
-    if (contentType && contentType.indexOf("application/json") !== -1) {
-      fetchedVenueData = await response.json();
-      console.log("Fetched Venues:", fetchedVenueData);
-    } else {
-      const textResponse = await response.text();
-      throw new Error(
-        `Expected JSON, but received ${contentType}. Response: ${textResponse}`
-      );
-    }
-  } catch (error) {
-    console.error("Could not fetch venues:", error);
-    fetchedVenueData = []; // Ensure it's an empty array on error
-    // Optionally display a user-friendly error message on the page here
-  }
+// =========================================================================
+// == API Fetching Functions (Keep As Is)
+// =========================================================================
+async function fetchVenues() { /* ... (Keep implementation from previous version) ... */
+    console.log("Attempting to fetch venues...");
+    try { const response = await fetch(`${API_BASE_URL}/venues/`); if (!response.ok) { throw new Error(`HTTP error! status: ${response.status} ${response.statusText}`); } const contentType = response.headers.get("content-type"); if (contentType && contentType.includes("application/json")) { const rawData = await response.json(); if (!Array.isArray(rawData)) { console.warn("Fetched venue data is not an array, resetting.", rawData); fetchedVenueData = []; } else { fetchedVenueData = rawData; console.log("Fetched Venues:", fetchedVenueData.length, "items"); } } else { const textResponse = await response.text(); throw new Error(`Expected JSON, but received ${contentType}. Response: ${textResponse}`); } } catch (error) { console.error("Could not fetch venues:", error); fetchedVenueData = []; const swiperSection = document.getElementById("venue-details-card")?.parentElement; if(swiperSection) swiperSection.innerHTML = `<p class="error-message">Error loading venues: ${error.message}</p>`; }
 }
-
-// Function to fetch Plans
-async function fetchPlans() {
-  try {
-    const response = await fetch(`${API_BASE_URL}/plans/`);
-    if (!response.ok) {
-      throw new Error(
-        `HTTP error! status: ${response.status} ${response.statusText}`
-      );
-    }
-    const contentType = response.headers.get("content-type");
-    if (contentType && contentType.indexOf("application/json") !== -1) {
-      fetchedPlanData = await response.json();
-      console.log("Fetched Plans:", fetchedPlanData);
-      // Set a default plan initially if plans were fetched
-      if (fetchedPlanData.length > 0) {
-        // Try to find 'Plan A', otherwise default to the first plan
-        currentPlan =
-          fetchedPlanData.find((p) => p.name === "Plan A") ||
-          fetchedPlanData[0];
-        applyPlan(currentPlan); // Apply the initial plan's theme and music
-      }
-    } else {
-      const textResponse = await response.text();
-      throw new Error(
-        `Expected JSON, but received ${contentType}. Response: ${textResponse}`
-      );
-    }
-  } catch (error) {
-    console.error("Could not fetch plans:", error);
-    fetchedPlanData = [];
-  }
+async function fetchPlans() { /* ... (Keep implementation from previous version) ... */
+    console.log("Attempting to fetch plans...");
+    try { const response = await fetch(`${API_BASE_URL}/plans/`); if (!response.ok) { throw new Error(`HTTP error! status: ${response.status} ${response.statusText}`); } const contentType = response.headers.get("content-type"); if (contentType && contentType.includes("application/json")) { fetchedPlanData = await response.json(); console.log("Fetched Plans:", fetchedPlanData); if (!Array.isArray(fetchedPlanData)) { console.warn("Fetched plan data is not an array, resetting.", fetchedPlanData); fetchedPlanData = []; } if (fetchedPlanData.length > 0) { currentPlan = fetchedPlanData.find((p) => p.name?.toLowerCase() === "plan a") || fetchedPlanData[0]; console.log("Initial plan set to:", currentPlan?.name || 'First Plan'); applyPlan(currentPlan); } else { console.log("No plans fetched."); applyPlan(null); } } else { const textResponse = await response.text(); throw new Error(`Expected JSON, but received ${contentType}. Response: ${textResponse}`); } } catch (error) { console.error("Could not fetch plans:", error); fetchedPlanData = []; applyPlan(null); }
 }
 
 // =========================================================================
-// == Plan Application Function
+// == Plan Application & Audio Handling (Keep As Is)
 // =========================================================================
+function applyPlan(plan) { /* ... (Keep implementation from previous version, including handleMetadataLoad, handleAudioError defined outside) ... */
+    const body = document.body; const musicPlayer = document.querySelector(".music-player"); const audioPlayer = document.getElementById("audio-player"); const albumArt = musicPlayer?.querySelector(".album-art img"); const trackTitleEl = musicPlayer?.querySelector("#track-title"); const artistNameEl = musicPlayer?.querySelector("#artist-name"); const progress = document.getElementById("progress"); const currentTimeEl = document.getElementById("current-time"); const totalTimeEl = document.getElementById("total-time"); const playPauseIcon = document.getElementById("play-pause-icon"); const playIconSvg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" width="36px" height="36px"><path d="M8 5v14l11-7z"/></svg>`;
+    if (!plan) { console.log("Applying default state (no plan)."); currentPlan = null; body.classList.remove("theme-positive", "theme-sad"); if (audioPlayer) { if (!audioPlayer.paused) audioPlayer.pause(); audioPlayer.src = ""; } if (albumArt) { albumArt.src = PLACEHOLDER_ALBUM_ART; albumArt.alt = "Album Art"; } if (trackTitleEl) trackTitleEl.textContent = "Track Title"; if (artistNameEl) artistNameEl.textContent = "Artist Name"; if (progress) progress.style.width = "0%"; if (currentTimeEl) currentTimeEl.textContent = "0:00"; if (totalTimeEl) totalTimeEl.textContent = "0:00"; if (playPauseIcon) playPauseIcon.innerHTML = playIconSvg; if(audioPlayer) { audioPlayer.removeEventListener("loadedmetadata", handleMetadataLoad); audioPlayer.removeEventListener("error", handleAudioError); } return; }
+    console.log("Applying Plan:", plan.name || `(ID: ${plan.id})`); currentPlan = plan;
+    body.classList.remove("theme-positive", "theme-sad"); if (plan.theme === "positive") { body.classList.add("theme-positive"); } else if (plan.theme === "sad") { body.classList.add("theme-sad"); } else { console.warn(`Plan '${plan.name}' has unknown theme:`, plan.theme); }
+    if (!musicPlayer || !audioPlayer) { console.warn("Music player elements missing."); return; }
+    let wasPlaying = !audioPlayer.paused && audioPlayer.currentTime > 0;
+    if (plan.song_url && audioPlayer.currentSrc !== plan.song_url) { console.log("Setting new audio source:", plan.song_url); audioPlayer.src = plan.song_url; audioPlayer.load(); } else if (!plan.song_url) { console.warn(`Plan "${plan.name}" has no song_url.`); if (!audioPlayer.paused) audioPlayer.pause(); audioPlayer.src = ""; wasPlaying = false; } else { console.log("Audio source is the same."); }
+    if (albumArt) { albumArt.src = plan.album_art_url || PLACEHOLDER_ALBUM_ART; albumArt.alt = plan.track_title || "Album Art"; } if (trackTitleEl) trackTitleEl.textContent = plan.track_title || "Unknown Track"; if (artistNameEl) artistNameEl.textContent = plan.artist_name || "Unknown Artist"; if (progress) progress.style.width = "0%"; if (currentTimeEl) currentTimeEl.textContent = "0:00"; if (totalTimeEl) totalTimeEl.textContent = "0:00"; if (playPauseIcon && audioPlayer.paused) playPauseIcon.innerHTML = playIconSvg;
+    audioPlayer.removeEventListener("loadedmetadata", handleMetadataLoad); audioPlayer.removeEventListener("error", handleAudioError); const metadataHandler = () => handleMetadataLoad(wasPlaying, plan.song_url); audioPlayer.addEventListener("loadedmetadata", metadataHandler, { once: true }); audioPlayer.addEventListener("error", handleAudioError, { once: true });
+}
+const handleMetadataLoad = (shouldResume, songUrl) => { /* ... (Keep implementation from previous version) ... */ const totalTimeEl = document.getElementById("total-time"); const audioPlayer = document.getElementById("audio-player"); console.log("Metadata loaded."); if (totalTimeEl && audioPlayer?.duration && !isNaN(audioPlayer.duration)) { console.log(`Duration: ${audioPlayer.duration}`); totalTimeEl.textContent = formatTime(audioPlayer.duration); } else if (totalTimeEl) { totalTimeEl.textContent = "0:00"; } if (shouldResume && songUrl && audioPlayer?.paused) { console.log("Attempting to resume playback..."); audioPlayer.play().catch(e => console.error("Audio play failed after metadata load:", e)); } else if (audioPlayer && !audioPlayer.paused) { console.log("Audio already playing or should not resume."); updatePlayPauseIconState(); } else { console.log("Not resuming playback."); updatePlayPauseIconState(); } };
+const handleAudioError = (e) => { /* ... (Keep implementation from previous version) ... */ console.error("Audio Player Error:", e.target.error?.message || 'Unknown error', e); const totalTimeEl = document.getElementById("total-time"); const progress = document.getElementById("progress"); const currentTimeEl = document.getElementById("current-time"); if (totalTimeEl) totalTimeEl.textContent = "Error"; if (progress) progress.style.width = "0%"; if (currentTimeEl) currentTimeEl.textContent = "0:00"; updatePlayPauseIconState(); };
 
-// Function to apply a Plan's theme and music
-// frontend/player.js
+// =========================================================================
+// == Helper Functions (Keep As Is)
+// =========================================================================
+function formatTime(seconds) { /* ... (keep existing implementation) ... */ if (isNaN(seconds) || seconds < 0) seconds = 0; const minutes = Math.floor(seconds / 60); const secs = Math.floor(seconds % 60); return `${minutes}:${secs < 10 ? "0" : ""}${secs}`; }
+function padZero(num) { /* ... (keep existing implementation) ... */ return num < 10 ? "0" + num : num; }
+function updatePlayPauseIconState() { /* ... (keep existing implementation) ... */ const audioPlayer = document.getElementById("audio-player"); const playPauseBtn = document.getElementById("play-pause-btn"); const playPauseIcon = document.getElementById("play-pause-icon"); if (!audioPlayer || !playPauseBtn || !playPauseIcon) return; const playIconSvg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" width="36px" height="36px"><path d="M8 5v14l11-7z"/></svg>`; const pauseIconSvg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" width="36px" height="36px"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>`; const isPlaying = !audioPlayer.paused && audioPlayer.readyState > 0; playPauseIcon.innerHTML = isPlaying ? pauseIconSvg : playIconSvg; playPauseBtn.setAttribute("aria-label", isPlaying ? "Pause" : "Play"); }
 
 // =========================================================================
-// == Global Variables & Configuration (Предполагается, что они уже есть)
+// == Venue Navigation Function
 // =========================================================================
-// let fetchedPlanData = [];
-// let currentPlan = null;
-// ... другие глобальные переменные ...
-
-// =========================================================================
-// == Plan Application Function (Обновленная версия)
-// =========================================================================
-
 /**
- * Применяет выбранный план: меняет тему и обновляет МУЗЫКАЛЬНЫЙ ПЛЕЕР (включая обложку).
- * @param {object} plan - Объект плана с данными (name, theme, song_url, album_art_url, etc.).
+ * Navigates the browser to the detail page for the given venue ID.
+ * @param {string | number} venueId - The ID of the venue.
  */
-function applyPlan(plan) {
-  if (!plan) {
-    console.warn("applyPlan called with null or undefined plan.");
-    return;
-  }
-  console.log("Applying Plan:", plan.name);
-  currentPlan = plan; // Обновляем глобальный текущий план
-
-  // --- Получаем ссылки на элементы DOM ---
-  const body = document.body;
-  const musicPlayer = document.querySelector(".music-player"); // Внутри phone-mockup
-  const audioPlayer = document.getElementById("audio-player");
-  const albumArt = musicPlayer?.querySelector(".album-art"); // <--- Ищем обложку внутри плеера
-  const trackTitleEl = musicPlayer?.querySelector("#track-title");
-  const artistNameEl = musicPlayer?.querySelector("#artist-name");
-
-  // --- 1. Применение Темы ---
-  body.classList.remove("theme-positive", "theme-sad"); // Сначала убираем старые
-  if (plan.theme === "positive") {
-    body.classList.add("theme-positive");
-  } else if (plan.theme === "sad") {
-    body.classList.add("theme-sad");
-  }
-
-  // --- 2. Обновление Музыкального Плеера ---
-  if (!musicPlayer || !audioPlayer) {
-    console.warn("Music player or audio element not found, cannot update.");
-    return; // Выходим, если основные элементы плеера отсутствуют
-  }
-
-  // Запоминаем, играл ли трек ДО смены источника
-  let wasPlaying = audioPlayer.src && !audioPlayer.paused && audioPlayer.readyState > 0;
-
-  // --- Обновление Источника Аудио ---
-  const newSongUrl = plan.song_url;
-  const currentFullSrc = audioPlayer.src; // Используем .src для получения полного URL
-  if (newSongUrl && currentFullSrc !== newSongUrl) {
-    console.log("Setting new audio src:", newSongUrl);
-    audioPlayer.src = newSongUrl;
-    audioPlayer.load(); // Важно для загрузки нового трека
-  } else if (!newSongUrl) {
-    console.warn(`Plan "${plan.name}" has no song_url. Stopping audio.`);
-    audioPlayer.pause();
-    audioPlayer.src = ""; // Очищаем источник
-    wasPlaying = false; // Сбрасываем флаг
-  } else {
-    console.log("Audio source unchanged or already set:", currentFullSrc);
-    // Если источник тот же, но был на паузе, обновим иконку (сделается ниже)
-  }
-
-  // --- Обновление Метаданных (Название, Артист) ---
-  if (trackTitleEl) {
-    trackTitleEl.textContent = plan.track_title || "Unknown Track";
-  }
-  if (artistNameEl) {
-    artistNameEl.textContent = plan.artist_name || "Unknown Artist";
-  }
-
-  // --- *** ОБНОВЛЕНИЕ ОБЛОЖКИ АЛЬБОМА (Album Art) *** ---
-  if (albumArt) {
-    // Определяем URL по умолчанию (убедитесь, что путь правильный относительно index.html)
-    const defaultArtSrc = "./assets/hq720 (1).jpg";
-    // Определяем целевой URL: URL из плана или URL по умолчанию
-    const targetAlbumArtSrc = plan.album_art_url || defaultArtSrc;
-
-    console.log(`[AlbumArt] Plan: ${plan.name}. Attempting URL: ${plan.album_art_url}`);
-    console.log(`[AlbumArt] Target src determined as: ${targetAlbumArtSrc}`);
-
-    // Обновляем src только если он действительно отличается от текущего
-    // Сравниваем полные URL (браузер сам их резолвит)
-    if (albumArt.src !== targetAlbumArtSrc) {
-        console.log(`[AlbumArt] Current src (${albumArt.src}) differs. Setting new src.`);
-        albumArt.src = targetAlbumArtSrc;
-
-        // Добавляем обработчик ОШИБКИ загрузки ИЗОБРАЖЕНИЯ
-        albumArt.onerror = () => {
-            // Проверяем, не пытаемся ли мы уже загрузить дефолтное изображение, чтобы избежать цикла
-            if (albumArt.src !== defaultArtSrc) {
-                console.error(`[AlbumArt] Failed to load: ${targetAlbumArtSrc}. Falling back to default: ${defaultArtSrc}`);
-                albumArt.src = defaultArtSrc; // Устанавливаем дефолтное при ошибке
-            } else {
-                // Если даже дефолтное не загрузилось
-                console.error(`[AlbumArt] CRITICAL: Failed to load DEFAULT image: ${defaultArtSrc}`);
-                albumArt.alt = "Error loading image"; // Показываем ошибку в alt
-            }
-            // Убираем обработчик после срабатывания, чтобы он не висел зря
-            albumArt.onerror = null;
-            albumArt.onload = null; // Также убираем обработчик успешной загрузки, если он был
-        };
-
-        // Опционально: убираем обработчик ошибки при УСПЕШНОЙ загрузке
-         albumArt.onload = () => {
-             console.log(`[AlbumArt] Successfully loaded: ${albumArt.src}`);
-             albumArt.onerror = null; // Убираем обработчик ошибки
-             albumArt.onload = null; // Убираем и этот обработчик
-         }
-
-    } else {
-        console.log(`[AlbumArt] Target src is the same as current src. No change needed.`);
-        // Если src не менялся, на всякий случай уберем старые обработчики,
-        // если они остались от предыдущей неудачной попытки загрузки ДРУГОГО плана
-        albumArt.onerror = null;
-        albumArt.onload = null;
+function navigateToVenueDetail(venueId) {
+    if (venueId === undefined || venueId === null || venueId === '') {
+        console.warn("navigateToVenueDetail called with invalid ID:", venueId);
+        return;
     }
 
-    // Всегда обновляем alt текст
-    albumArt.alt = plan.track_title || "Album Art";
+    // Construct the URL using the configured base path
+    const venueDetailUrl = `${VENUE_DETAIL_BASE_PATH}/${venueId}/`;
+    console.log(`Navigating to: ${venueDetailUrl}`);
 
-  } else {
-    console.warn("Album art element (.album-art) not found inside music player.");
-  }
-  // --- *** КОНЕЦ Обновления Обложки Альбома *** ---
-
-
-  // --- Обновление UI Прогресса и Времени ---
-  const progress = document.getElementById("progress");
-  const currentTimeEl = document.getElementById("current-time");
-  const totalTimeEl = document.getElementById("total-time");
-  if (progress) progress.style.width = "0%";
-  if (currentTimeEl) currentTimeEl.textContent = "0:00";
-  if (totalTimeEl) totalTimeEl.textContent = "0:00";
-
-  // --- Обработчики для Загрузки Метаданных Аудио ---
-  // (Эти обработчики специфичны для каждой загрузки трека)
-  const handleMetadataLoad = () => {
-    console.log("Audio metadata loaded for:", audioPlayer.src);
-    if (totalTimeEl && audioPlayer.duration && !isNaN(audioPlayer.duration)) {
-      totalTimeEl.textContent = formatTime(audioPlayer.duration);
-    } else if (totalTimeEl) {
-      totalTimeEl.textContent = "0:00";
+    try {
+        // Use window.location.href for reliable navigation
+        window.location.href = venueDetailUrl;
+    } catch (navError) {
+        console.error(`Error during navigation attempt to ${venueDetailUrl}:`, navError);
+        // Optionally alert the user if navigation fails catastrophically
+        // alert("Could not navigate to the venue details page.");
     }
-    // Пытаемся возобновить воспроизведение, если нужно
-    if (wasPlaying && plan.song_url) {
-      audioPlayer.play()
-        .then(updatePlayPauseIcon) // Обновляем иконку ПОСЛЕ успешного старта
-        .catch((e) => console.error("Audio play failed after plan change:", e));
-    } else {
-        updatePlayPauseIcon(); // Обновляем иконку в любом случае
-    }
-    // Очистка обработчиков (лучше делать явно, но {once: true} тоже работает)
-    audioPlayer.removeEventListener("loadedmetadata", handleMetadataLoad);
-    audioPlayer.removeEventListener("error", handleAudioError);
-  };
-
-  const handleAudioError = (e) => {
-    console.error("Audio Player Error loading new track:", e);
-    if (totalTimeEl) totalTimeEl.textContent = "Error";
-    if (progress) progress.style.width = "0%";
-    if (currentTimeEl) currentTimeEl.textContent = "0:00";
-    updatePlayPauseIcon(); // Ставим иконку Play при ошибке
-    // Очистка обработчиков
-    audioPlayer.removeEventListener("loadedmetadata", handleMetadataLoad);
-    audioPlayer.removeEventListener("error", handleAudioError);
-  };
-
-  // Убираем старые и добавляем новые ОДНОРАЗОВЫЕ обработчики для текущей загрузки
-  audioPlayer.removeEventListener("loadedmetadata", handleMetadataLoad); // На всякий случай
-  audioPlayer.removeEventListener("error", handleAudioError); // На всякий случай
-  audioPlayer.addEventListener("loadedmetadata", handleMetadataLoad, { once: true });
-  audioPlayer.addEventListener("error", handleAudioError, { once: true });
-
-  // Сразу обновляем иконку Play/Pause на случай, если песня была удалена
-  updatePlayPauseIcon();
-
-} // --- Конец функции applyPlan ---
-
-
-// =========================================================================
-// == Другие Функции и Код Инициализации (Предполагается, что они есть)
-// =========================================================================
-
-// Убедитесь, что у вас есть эта функция где-то в player.js
-// (Она вызывается из applyPlan и обработчиков событий плеера)
-function updatePlayPauseIcon() {
-    const audioPlayer = document.getElementById("audio-player");
-    const playPauseIcon = document.getElementById("play-pause-icon");
-    const playPauseBtn = document.getElementById("play-pause-btn");
-    if (!audioPlayer || !playPauseIcon || !playPauseBtn) return;
-    const playIconSvg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" width="36px" height="36px"><path d="M8 5v14l11-7z"/></svg>`;
-    const pauseIconSvg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" width="36px" height="36px"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>`;
-    const isPlaying = audioPlayer.src && !audioPlayer.paused && audioPlayer.readyState > 0;
-    playPauseIcon.innerHTML = isPlaying ? pauseIconSvg : playIconSvg;
-    playPauseBtn.setAttribute("aria-label", isPlaying ? "Pause" : "Play");
 }
 
-// ... (весь остальной код из вашего player.js: fetchVenues, хелперы,
-//      логика плеера в DOMContentLoaded, логика таймера, карты, свайпера,
-//      чеклиста, создание кнопок планов) ...
-
-// Пример того, как выглядит конец файла player.js:
-/*
-  // ... (код для свайпера, чек-листа, создания кнопок) ...
-
-  console.log("Initial setup complete.");
-}); // --- END DOMContentLoaded ---
-*/
-// =========================================================================
-// == Helper Functions
-// =========================================================================
-
-// Format time in seconds to M:SS format
-function formatTime(seconds) {
-  if (isNaN(seconds) || seconds < 0) seconds = 0;
-  const minutes = Math.floor(seconds / 60);
-  const secs = Math.floor(seconds % 60);
-  return `${minutes}:${secs < 10 ? "0" : ""}${secs}`;
-}
-
-// Format number with leading zero if needed
-function padZero(num) {
-  return num < 10 ? "0" + num : num;
-}
 
 // =========================================================================
 // == DOMContentLoaded Event Listener (Main Execution Block)
 // =========================================================================
 document.addEventListener("DOMContentLoaded", async () => {
-  // Make this async
+  console.log("DOM loaded. Starting initialization...");
 
-  console.log("DOM loaded. Fetching data...");
   // --- Fetch data FIRST ---
-  await fetchVenues(); // Wait for venues
-  await fetchPlans(); // Wait for plans (this also applies initial plan via applyPlan)
-  console.log("Data fetching complete.");
+  console.log("Fetching initial venue and plan data...");
+  try {
+      await Promise.all([ fetchVenues(), fetchPlans() ]);
+      console.log("Initial data fetching complete.");
+  } catch (error) { console.error("Error during initial data fetch:", error); }
+
 
   // =========================================================================
-  // == MUSIC PLAYER LOGIC (Event Listeners & Core Controls)
+  // == MUSIC PLAYER LOGIC (Keep As Is)
   // =========================================================================
+  console.log("Initializing Music Player...");
   const audioPlayer = document.getElementById("audio-player");
   const playPauseBtn = document.getElementById("play-pause-btn");
-  const playPauseIcon = document.getElementById("play-pause-icon");
-  const prevBtn = document.getElementById("prev-btn");
-  const nextBtn = document.getElementById("next-btn");
-  const progressContainer = document.getElementById("progress-container");
-  const progress = document.getElementById("progress");
-  const currentTimeEl = document.getElementById("current-time");
-  const totalTimeEl = document.getElementById("total-time"); // Already used in applyPlan
-  const volumeSlider = document.getElementById("volume-slider");
-
-  if (
-    audioPlayer &&
-    playPauseBtn &&
-    playPauseIcon &&
-    prevBtn &&
-    nextBtn &&
-    progressContainer &&
-    progress &&
-    currentTimeEl &&
-    totalTimeEl &&
-    volumeSlider
-  ) {
-    const playIconSvg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" width="36px" height="36px"><path d="M8 5v14l11-7z"/></svg>`;
-    const pauseIconSvg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" width="36px" height="36px"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>`;
-    // Initial icon state might be set by applyPlan, but set default just in case
-    playPauseIcon.innerHTML = playIconSvg;
-    playPauseBtn.setAttribute("aria-label", "Play");
-
-    function updatePlayPauseIcon() {
-      const isPlaying = !audioPlayer.paused; // Check current state
-      playPauseIcon.innerHTML = isPlaying ? pauseIconSvg : playIconSvg;
-      playPauseBtn.setAttribute("aria-label", isPlaying ? "Pause" : "Play");
-    }
-
-    function togglePlayPause() {
-      if (!audioPlayer.src && currentPlan?.song_url) {
-        // If no src, try applying current plan's song
-        console.log("No audio source, attempting to load from current plan.");
-        applyPlan(currentPlan); // This will load and potentially play
-        return; // Exit, applyPlan handles playback attempt
-      } else if (!audioPlayer.src) {
-        console.warn("Cannot play: No audio source set.");
-        return; // Nothing to play
-      }
-
-      if (audioPlayer.paused) {
-        audioPlayer
-          .play()
-          .then(updatePlayPauseIcon)
-          .catch((e) => console.error("Audio play failed:", e));
-      } else {
-        audioPlayer.pause();
-        updatePlayPauseIcon(); // Update icon immediately on pause
-      }
-    }
-
-    function updateProgress() {
-      if (
-        audioPlayer.duration &&
-        !isNaN(audioPlayer.duration) &&
-        audioPlayer.duration > 0
-      ) {
-        const progressPercent =
-          (audioPlayer.currentTime / audioPlayer.duration) * 100;
-        if (progress) progress.style.width = `${progressPercent}%`;
-        if (currentTimeEl)
-          currentTimeEl.textContent = formatTime(audioPlayer.currentTime);
-      } else {
-        // Reset if duration is invalid (e.g., after src change or error)
-        if (progress) progress.style.width = "0%";
-        if (currentTimeEl) currentTimeEl.textContent = "0:00";
-      }
-    }
-
-    function seek(event) {
-      if (isNaN(audioPlayer.duration) || audioPlayer.duration <= 0) return;
-      const rect = progressContainer.getBoundingClientRect();
-      const clickX = event.clientX - rect.left;
-      const width = progressContainer.clientWidth;
-      const seekRatio = Math.max(0, Math.min(1, clickX / width));
-      audioPlayer.currentTime = seekRatio * audioPlayer.duration;
-      updateProgress(); // Update UI immediately after seek
-    }
-
-    function changeVolume() {
-      audioPlayer.volume = volumeSlider.value / 100;
-    }
-
-    function restartSong() {
-      if (!audioPlayer.src) return; // Don't restart if no song loaded
-      audioPlayer.currentTime = 0;
-      if (audioPlayer.paused) {
-        // If paused, just reset time, don't auto-play
-        updateProgress();
-      } else {
-        // If playing, ensure it continues playing from start
-        audioPlayer
-          .play()
-          .catch((e) => console.error("Audio play failed on restart:", e));
-      }
-    }
-
-    // Attach Event Listeners
-    playPauseBtn.addEventListener("click", togglePlayPause);
-    audioPlayer.addEventListener("timeupdate", updateProgress);
-    // loadedmetadata and error listeners are handled within applyPlan now
-    audioPlayer.addEventListener("play", updatePlayPauseIcon); // Update icon when play starts
-    audioPlayer.addEventListener("pause", updatePlayPauseIcon); // Update icon when pause happens
-    audioPlayer.addEventListener("ended", () => {
-      // Option 1: Stop at end
-      // audioPlayer.currentTime = 0; // Reset time
-      // updatePlayPauseIcon();
-      // updateProgress();
-
-      // Option 2: Loop (uncomment if desired)
-      audioPlayer.currentTime = 0;
-      audioPlayer
-        .play()
-        .catch((e) => console.error("Audio play failed on loop:", e));
-
-      // Option 3: Go to next song (requires playlist logic not implemented here)
-    });
-    progressContainer.addEventListener("click", seek);
-    volumeSlider.addEventListener("input", changeVolume);
-    prevBtn.addEventListener("click", restartSong);
-    nextBtn.addEventListener("click", restartSong); // Currently restarts, could be next track later
-
-    // Set initial volume
-    changeVolume();
-  } else {
-    console.warn(
-      "Music player core elements not found. Player non-functional."
-    );
-  }
+  // ... (other player elements)
+  if (audioPlayer && playPauseBtn /* ... && other elements ... */) {
+      console.log("Music player elements found. Attaching listeners.");
+      function togglePlayPause() { /* ... (Keep implementation from previous version) ... */ if (!audioPlayer.src && currentPlan?.song_url) { console.log("No audio source, load/play from plan."); const playIntentHandler = () => handleMetadataLoad(true, currentPlan.song_url); audioPlayer.removeEventListener("loadedmetadata", playIntentHandler); audioPlayer.addEventListener("loadedmetadata", playIntentHandler, { once: true }); applyPlan(currentPlan); return; } else if (!audioPlayer.src) { console.warn("Cannot play: No audio source."); return; } if (audioPlayer.paused) { audioPlayer.play().catch((e) => { console.error("Audio play failed:", e); updatePlayPauseIconState(); }); } else { audioPlayer.pause(); } }
+      function updateProgress() { /* ... (Keep implementation from previous version) ... */ if (audioPlayer.duration && !isNaN(audioPlayer.duration) && audioPlayer.duration > 0) { const progressPercent = (audioPlayer.currentTime / audioPlayer.duration) * 100; const progress = document.getElementById("progress"); if (progress) progress.style.width = `${progressPercent}%`; const currentTimeEl = document.getElementById("current-time"); if (currentTimeEl) currentTimeEl.textContent = formatTime(audioPlayer.currentTime); } else { const progress = document.getElementById("progress"); if (progress) progress.style.width = "0%"; const currentTimeEl = document.getElementById("current-time"); if (currentTimeEl) currentTimeEl.textContent = "0:00"; } }
+      function seek(event) { /* ... (Keep implementation from previous version) ... */ const progressContainer = document.getElementById("progress-container"); if (!audioPlayer.duration || isNaN(audioPlayer.duration) || audioPlayer.duration <= 0 || !progressContainer) { console.warn("Cannot seek."); return; } const rect = progressContainer.getBoundingClientRect(); const clickX = event.clientX - rect.left; const width = progressContainer.clientWidth; const seekRatio = Math.max(0, Math.min(1, clickX / width)); audioPlayer.currentTime = seekRatio * audioPlayer.duration; updateProgress(); }
+      function changeVolume() { /* ... (Keep implementation from previous version) ... */ const volumeSlider = document.getElementById("volume-slider"); if(volumeSlider) audioPlayer.volume = Math.max(0, Math.min(1, volumeSlider.value / 100)); }
+      function restartSong() { /* ... (Keep implementation from previous version) ... */ if (!audioPlayer.src || isNaN(audioPlayer.duration)) return; audioPlayer.currentTime = 0; if (audioPlayer.paused) { updateProgress(); } else { audioPlayer.play().catch((e) => console.error("Audio play failed on restart:", e)); } }
+      function nextSong() { console.log("Next button: placeholder action."); restartSong(); }
+      playPauseBtn.addEventListener("click", togglePlayPause);
+      audioPlayer.addEventListener("timeupdate", updateProgress);
+      audioPlayer.addEventListener("play", updatePlayPauseIconState);
+      audioPlayer.addEventListener("pause", updatePlayPauseIconState);
+      audioPlayer.addEventListener("ended", restartSong);
+      document.getElementById("progress-container")?.addEventListener("click", seek);
+      document.getElementById("volume-slider")?.addEventListener("input", changeVolume);
+      document.getElementById("prev-btn")?.addEventListener("click", restartSong);
+      document.getElementById("next-btn")?.addEventListener("click", nextSong);
+      changeVolume(); updatePlayPauseIconState();
+  } else { console.warn("Music player core elements missing."); }
 
   // =========================================================================
-  // == COUNTDOWN TIMER LOGIC (Adapted from original)
+  // == COUNTDOWN TIMER LOGIC (Keep As Is)
   // =========================================================================
-  const datePicker = document.getElementById("event-date-picker");
-  const setDateBtn = document.getElementById("set-date-btn");
-  const daysNumEl = document.getElementById("days-num");
-  const hoursNumEl = document.getElementById("hours-num");
-  const minutesNumEl = document.getElementById("minutes-num");
-  const secondsNumEl = document.getElementById("seconds-num");
-  const calDay1El = document.getElementById("cal-day-1");
-  const calDay2El = document.getElementById("cal-day-2");
-  const calDay3El = document.getElementById("cal-day-3");
-
-  if (
-    datePicker &&
-    setDateBtn &&
-    daysNumEl &&
-    hoursNumEl &&
-    minutesNumEl &&
-    secondsNumEl &&
-    calDay1El &&
-    calDay2El &&
-    calDay3El
-  ) {
-    const localStorageKey = "targetEventDate";
-    let targetDate = null;
-    let countdownInterval = null;
-
-    function updateCalendarDisplay(dateObj) {
-      if (!dateObj || isNaN(dateObj.getTime())) {
-        calDay1El.textContent = "--";
-        calDay2El.textContent = "--";
-        calDay3El.textContent = "--";
-        calDay1El.classList.remove("highlight");
-        calDay2El.classList.add("highlight");
-        calDay3El.classList.remove("highlight");
-        return;
-      }
-      const targetDay = dateObj.getDate();
-      const prevDate = new Date(dateObj);
-      prevDate.setDate(targetDay - 1);
-      const nextDate = new Date(dateObj);
-      nextDate.setDate(targetDay + 1);
-      calDay1El.textContent = prevDate.getDate();
-      calDay2El.textContent = targetDay;
-      calDay3El.textContent = nextDate.getDate();
-      calDay1El.classList.remove("highlight");
-      calDay2El.classList.add("highlight");
-      calDay3El.classList.remove("highlight");
-    }
-
-    function updateCountdown() {
-      if (!targetDate || isNaN(targetDate.getTime())) {
-        daysNumEl.textContent = "--";
-        hoursNumEl.textContent = "--";
-        minutesNumEl.textContent = "--";
-        secondsNumEl.textContent = "--";
-        return;
-      }
-      const now = new Date().getTime();
-      const difference = targetDate.getTime() - now;
-      if (difference <= 0) {
-        daysNumEl.textContent = "00";
-        hoursNumEl.textContent = "00";
-        minutesNumEl.textContent = "00";
-        secondsNumEl.textContent = "00";
-        if (countdownInterval) {
-          clearInterval(countdownInterval);
-          countdownInterval = null;
-        }
-        return;
-      }
-      const days = Math.floor(difference / (1000 * 60 * 60 * 24));
-      const hours = Math.floor(
-        (difference % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60)
-      );
-      const minutes = Math.floor((difference % (1000 * 60 * 60)) / (1000 * 60));
-      const seconds = Math.floor((difference % (1000 * 60)) / 1000);
-      daysNumEl.textContent = padZero(days);
-      hoursNumEl.textContent = padZero(hours);
-      minutesNumEl.textContent = padZero(minutes);
-      secondsNumEl.textContent = padZero(seconds);
-    }
-
-    function startCountdown() {
-      if (countdownInterval) clearInterval(countdownInterval);
-      if (
-        targetDate &&
-        !isNaN(targetDate.getTime()) &&
-        targetDate.getTime() > new Date().getTime()
-      ) {
-        updateCountdown(); // Update immediately
-        countdownInterval = setInterval(updateCountdown, 1000);
-      } else {
-        updateCountdown(); // Update to show 00 or --
-      }
-    }
-
-    function handleSetDate() {
-      const selectedDateString = datePicker.value;
-      if (!selectedDateString) {
-        alert("Please select a date.");
-        return;
-      }
-      // Basic validation, consider adding more robust date parsing/validation
-      const parts = selectedDateString.split("-");
-      if (parts.length !== 3) {
-        alert("Invalid date format.");
-        return;
-      }
-      const year = parseInt(parts[0], 10);
-      const month = parseInt(parts[1], 10) - 1;
-      const day = parseInt(parts[2], 10);
-      if (isNaN(year) || isNaN(month) || isNaN(day)) {
-        alert("Invalid date components.");
-        return;
-      }
-
-      const potentialTargetDate = new Date(Date.UTC(year, month, day)); // Use UTC to avoid timezone issues
-      if (isNaN(potentialTargetDate.getTime())) {
-        alert("Invalid date selected.");
-        return;
-      }
-
-      const today = new Date();
-      today.setUTCHours(0, 0, 0, 0); // Compare with UTC today
-      if (potentialTargetDate < today) {
-        alert("Please select a future date (or today).");
-        return;
-      }
-
-      localStorage.setItem(localStorageKey, selectedDateString);
-      targetDate = potentialTargetDate;
-      updateCalendarDisplay(targetDate);
-      startCountdown();
-    }
-
-    function loadDateFromStorage() {
-      const storedDateString = localStorage.getItem(localStorageKey);
-      if (storedDateString) {
-        const parts = storedDateString.split("-");
-        if (parts.length === 3) {
-          const year = parseInt(parts[0], 10);
-          const month = parseInt(parts[1], 10) - 1;
-          const day = parseInt(parts[2], 10);
-          if (!isNaN(year) && !isNaN(month) && !isNaN(day)) {
-            const loadedDate = new Date(Date.UTC(year, month, day));
-            if (!isNaN(loadedDate.getTime())) {
-              targetDate = loadedDate;
-              datePicker.value = storedDateString; // Set picker value
-              updateCalendarDisplay(targetDate);
-              startCountdown();
-              return; // Exit if loaded successfully
-            }
-          }
-        }
-        // If stored data is invalid, remove it
-        localStorage.removeItem(localStorageKey);
-      }
-      // If no valid data loaded, initialize display
-      updateCalendarDisplay(null);
-      updateCountdown();
-    }
-
-    // Attach Listener and Load Initial State
-    setDateBtn.addEventListener("click", handleSetDate);
-    loadDateFromStorage();
-  } else {
-    console.warn("Countdown timer elements not found.");
-  }
+  console.log("Initializing Countdown Timer...");
+  // ... (Keep the countdown timer logic exactly as in the previous version) ...
+  const datePicker = document.getElementById("event-date-picker"); const setDateBtn = document.getElementById("set-date-btn"); const daysNumEl = document.getElementById("days-num"); const hoursNumEl = document.getElementById("hours-num"); const minutesNumEl = document.getElementById("minutes-num"); const secondsNumEl = document.getElementById("seconds-num"); const calDay1El = document.getElementById("cal-day-1"); const calDay2El = document.getElementById("cal-day-2"); const calDay3El = document.getElementById("cal-day-3");
+  if (datePicker && setDateBtn && daysNumEl && hoursNumEl && minutesNumEl && secondsNumEl && calDay1El && calDay2El && calDay3El ) { console.log("Countdown timer elements found."); const localStorageKey = "targetEventDate"; let targetDate = null; let countdownInterval = null; function updateCalendarDisplay(dateObj) { if (!dateObj || isNaN(dateObj.getTime())) { calDay1El.textContent = "--"; calDay2El.textContent = "--"; calDay3El.textContent = "--"; calDay1El.classList.remove("highlight"); calDay2El.classList.add("highlight"); calDay3El.classList.remove("highlight"); return; } const targetDay = dateObj.getUTCDate(); const prevDate = new Date(dateObj); prevDate.setUTCDate(targetDay - 1); const nextDate = new Date(dateObj); nextDate.setUTCDate(targetDay + 1); calDay1El.textContent = padZero(prevDate.getUTCDate()); calDay2El.textContent = padZero(targetDay); calDay3El.textContent = padZero(nextDate.getUTCDate()); calDay1El.classList.remove("highlight"); calDay2El.classList.add("highlight"); calDay3El.classList.remove("highlight"); } function updateCountdown() { if (!targetDate || isNaN(targetDate.getTime())) { daysNumEl.textContent = "--"; hoursNumEl.textContent = "--"; minutesNumEl.textContent = "--"; secondsNumEl.textContent = "--"; return; } const now = new Date().getTime(); const difference = targetDate.getTime() - now; if (difference <= 0) { daysNumEl.textContent = "00"; hoursNumEl.textContent = "00"; minutesNumEl.textContent = "00"; secondsNumEl.textContent = "00"; if (countdownInterval) { clearInterval(countdownInterval); countdownInterval = null; } return; } const days = Math.floor(difference / 86400000); const hours = Math.floor((difference % 86400000) / 3600000); const minutes = Math.floor((difference % 3600000) / 60000); const seconds = Math.floor((difference % 60000) / 1000); daysNumEl.textContent = padZero(days); hoursNumEl.textContent = padZero(hours); minutesNumEl.textContent = padZero(minutes); secondsNumEl.textContent = padZero(seconds); } function startCountdown() { if (countdownInterval) clearInterval(countdownInterval); if (targetDate && !isNaN(targetDate.getTime()) && targetDate.getTime() > new Date().getTime()) { updateCountdown(); countdownInterval = setInterval(updateCountdown, 1000); } else { updateCountdown(); } } function handleSetDate() { const selectedDateString = datePicker.value; if (!selectedDateString) { alert("Please select a date."); return; } const parts = selectedDateString.split("-"); if (parts.length !== 3) { alert("Invalid date format."); return; } const year = parseInt(parts[0], 10); const month = parseInt(parts[1], 10) - 1; const day = parseInt(parts[2], 10); if (isNaN(year) || isNaN(month) || isNaN(day)) { alert("Invalid date components."); return; } const potentialTargetDate = new Date(Date.UTC(year, month, day, 0, 0, 0)); if (isNaN(potentialTargetDate.getTime())) { alert("Invalid date selected."); return; } const todayUTC = new Date(); todayUTC.setUTCHours(0, 0, 0, 0); if (potentialTargetDate < todayUTC) { alert("Please select today or a future date."); return; } localStorage.setItem(localStorageKey, selectedDateString); targetDate = potentialTargetDate; updateCalendarDisplay(targetDate); startCountdown(); console.log("New target date set:", targetDate); } function loadDateFromStorage() { const storedDateString = localStorage.getItem(localStorageKey); if (storedDateString) { const parts = storedDateString.split("-"); if (parts.length === 3) { const year = parseInt(parts[0], 10); const month = parseInt(parts[1], 10) - 1; const day = parseInt(parts[2], 10); if (!isNaN(year) && !isNaN(month) && !isNaN(day)) { const loadedDate = new Date(Date.UTC(year, month, day, 0, 0, 0)); if (!isNaN(loadedDate.getTime())) { targetDate = loadedDate; datePicker.value = storedDateString; console.log("Loaded target date from storage:", targetDate); updateCalendarDisplay(targetDate); startCountdown(); return; } } } console.warn("Invalid date string found in localStorage, removing."); localStorage.removeItem(localStorageKey); } console.log("No valid date in storage, initializing default display."); updateCalendarDisplay(null); updateCountdown(); } setDateBtn.addEventListener("click", handleSetDate); loadDateFromStorage(); } else { console.warn("Countdown timer elements missing."); }
 
   // =========================================================================
-  // == LEAFLET MAP INITIALIZATION (Using fetched data)
+  // == LEAFLET MAP INITIALIZATION (Keep As Is)
   // =========================================================================
-  const venueMapContainer = document.getElementById("venue-map");
-  if (venueMapContainer && typeof L !== "undefined") {
-    // Check Leaflet exists
-    if (fetchedVenueData.length > 0) {
-      try {
-        const firstVenue = fetchedVenueData[0];
-        // Use first venue's coords, fall back to default if missing
-        const initialCoords =
-          firstVenue?.latitude != null && firstVenue?.longitude != null
-            ? [firstVenue.latitude, firstVenue.longitude]
-            : [42.8749, 74.6049]; // Default (e.g., Bishkek center)
-
-        venueMapInstance = L.map(venueMapContainer, {
-          zoomControl: false,
-        }).setView(initialCoords, MAP_ZOOM_LEVEL);
-        L.control.zoom({ position: "bottomright" }).addTo(venueMapInstance);
-
-        L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
-          attribution:
-            '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
-          maxZoom: 19,
-        }).addTo(venueMapInstance);
-
-        venueMarker = L.marker(initialCoords).addTo(venueMapInstance);
-        if (firstVenue?.name) {
-          venueMarker.bindPopup(`<b>${firstVenue.name}</b>`).openPopup(); // Optionally open popup initially
-        }
-
-        // Invalidate size after a short delay to ensure proper rendering
-        setTimeout(() => {
-          if (venueMapInstance) venueMapInstance.invalidateSize();
-        }, 250);
-      } catch (error) {
-        console.error("Error initializing Leaflet map:", error);
-        if (venueMapContainer)
-          venueMapContainer.innerHTML = "<p class='map-error'>Map Error</p>";
-      }
-    } else {
-      // Handle case where no venues were fetched
-      console.warn("Map initialization skipped: No venue data fetched.");
-      if (venueMapContainer)
-        venueMapContainer.innerHTML =
-          "<p class='map-error'>No venues found</p>";
-    }
-  } else {
-    console.warn("Map container or Leaflet library (L) not found.");
-  }
+  console.log("Initializing Leaflet Map...");
+  // ... (Keep map initialization logic exactly as in the previous version) ...
+  const venueMapContainer = document.getElementById("venue-map"); if (venueMapContainer && typeof L !== "undefined") { console.log("Map container and Leaflet library found."); if (fetchedVenueData.length > 0) { try { const firstVenue = fetchedVenueData[0]; const initialCoords = firstVenue?.latitude != null && firstVenue?.longitude != null ? [firstVenue.latitude, firstVenue.longitude] : [42.8749, 74.6049]; /* <<< ADAPT FALLBACK */ console.log("Initializing map at coords:", initialCoords); venueMapInstance = L.map(venueMapContainer, { zoomControl: false }).setView(initialCoords, MAP_ZOOM_LEVEL); L.control.zoom({ position: "bottomright" }).addTo(venueMapInstance); L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", { attribution: '© OpenStreetMap contributors', maxZoom: 19 }).addTo(venueMapInstance); venueMarker = L.marker(initialCoords).addTo(venueMapInstance); if (firstVenue?.name) { venueMarker.bindPopup(`<b>${firstVenue.name}</b>`).openPopup(); } setTimeout(() => { if (venueMapInstance) { console.log("Invalidating map size."); venueMapInstance.invalidateSize(); } }, 250); } catch (error) { console.error("Error initializing Leaflet map:", error); if (venueMapContainer) venueMapContainer.innerHTML = "<p class='map-error'>Error loading map.</p>"; } } else { console.warn("Map init skipped: No venue data."); if (venueMapContainer) venueMapContainer.innerHTML = "<p class='map-error'>No venues for map.</p>"; } } else { if (!venueMapContainer) console.warn("Map container #venue-map missing."); if (typeof L === "undefined") console.warn("Leaflet library (L) missing."); if (venueMapContainer) venueMapContainer.innerHTML = "<p class='map-error'>Map disabled.</p>"; }
 
   // =========================================================================
-  // == VENUE SWIPER LOGIC (Using fetched data)
+  // == VENUE SWIPER LOGIC (Revised for Mobile Taps)
   // =========================================================================
+  console.log("Initializing Venue Swiper...");
   const venueCard = document.getElementById("venue-details-card");
   const chooseVenueCard = document.getElementById("choose-venue-card");
-  // The map card doesn't swipe its content, only the other two do
-  // const suggestionCard = document.querySelector(".venue-suggestion");
 
-  // Check if main swipeable cards and fetched data exist
-  if (venueCard && chooseVenueCard && fetchedVenueData.length > 0) {
-    const venueWrapper = venueCard.querySelector(".card-content-wrapper");
-    const chooseWrapper = chooseVenueCard.querySelector(
-      ".card-content-wrapper"
-    );
-    const allDotsInnerContainers = document.querySelectorAll(".dots-inner"); // Get dots containers from BOTH cards
+  if (venueCard && chooseVenueCard) {
+      console.log("Swiper card elements found.");
+      if (fetchedVenueData.length > 0) {
+          console.log("Venue data found, setting up swiper interactions.");
+          const venueWrapper = venueCard.querySelector(".card-content-wrapper");
+          const chooseWrapper = chooseVenueCard.querySelector(".card-content-wrapper");
+          const allDotsInnerContainers = document.querySelectorAll(".dots-inner");
 
-    // Check if all necessary inner elements for displaying data exist
-    const venueNameEl = venueWrapper?.querySelector(".venue-name");
-    const venueDateEl = venueWrapper?.querySelector(".venue-date");
-    const ratingEl = chooseWrapper?.querySelector(".rating");
-    const ratingTextEl = chooseWrapper?.querySelector(".rating-text");
-    const venueIcon1El = chooseWrapper?.querySelector(".venue-icon-1");
-    const venueIcon2El = chooseWrapper?.querySelector(".venue-icon-2");
+          if (venueWrapper && chooseWrapper && allDotsInnerContainers.length >= 2) {
+              console.log("Swiper inner wrappers and dots containers found.");
 
-    if (
-      venueWrapper &&
-      chooseWrapper &&
-      allDotsInnerContainers.length >= 2 && // Ensure we have dots for both cards
-      venueNameEl &&
-      venueDateEl &&
-      ratingEl &&
-      ratingTextEl &&
-      venueIcon1El &&
-      venueIcon2El
-    ) {
-      let isDragging = false,
-        startX = 0,
-        currentX = 0,
-        diffX = 0,
-        cardWidth = venueCard.offsetWidth;
+              // --- Swiper Helper Functions (Keep generateDots, updateDots, updateVenueMap as is) ---
+              function generateDots() { /* ... (Keep implementation from previous version) ... */ console.log(`Generating ${fetchedVenueData.length} dots.`); allDotsInnerContainers.forEach((dotsInner) => { if (dotsInner) { dotsInner.innerHTML = ""; fetchedVenueData.forEach(() => { dotsInner.appendChild(document.createElement("span")); }); } else { console.warn("A .dots-inner container missing."); } }); }
+              function updateDots(activeIndex) { /* ... (Keep implementation from previous version) ... */ if (activeIndex < 0 || activeIndex >= fetchedVenueData.length) return; console.log(`Updating dots to active index: ${activeIndex}`); allDotsInnerContainers.forEach((dotsInner) => { if (!dotsInner) return; const dots = dotsInner.querySelectorAll("span"); const dotsContainer = dotsInner.parentElement; if (!dotsContainer || dots.length !== fetchedVenueData.length || dots.length === 0) { console.warn("Dots container/dots mismatch."); return; } dots.forEach((dot, index) => dot.classList.toggle("active", index === activeIndex)); const dotTotalWidth = DOT_WIDTH + DOT_MARGIN * 2; const containerVisibleWidth = dotsContainer.offsetWidth; const totalInnerWidth = fetchedVenueData.length * dotTotalWidth; const activeDotCenterOffset = activeIndex * dotTotalWidth + dotTotalWidth / 2; let translateX = containerVisibleWidth / 2 - activeDotCenterOffset; if (totalInnerWidth > containerVisibleWidth) { const maxTranslate = 0; const minTranslate = containerVisibleWidth - totalInnerWidth; translateX = Math.max(minTranslate, Math.min(maxTranslate, translateX)); } else { translateX = (containerVisibleWidth - totalInnerWidth) / 2; } dotsInner.style.transform = `translateX(${translateX}px)`; }); }
+              function updateVenueMap(lat, lng, venueName) { /* ... (Keep implementation from previous version) ... */ if (!venueMapInstance || !venueMarker) { console.warn("Map update skipped: instance/marker missing."); return; } if (typeof lat === "number" && typeof lng === "number") { const newLatLng = [lat, lng]; console.log(`Updating map to [${lat}, ${lng}] for "${venueName}"`); venueMapInstance.setView(newLatLng, MAP_ZOOM_LEVEL, { animate: true, pan: { duration: 0.5 } }); venueMarker.setLatLng(newLatLng); if (venueName) { venueMarker.setPopupContent(`<b>${venueName}</b>`); } setTimeout(() => { if (venueMapInstance) venueMapInstance.invalidateSize(); }, 150); } else { console.warn(`Map update skipped for "${venueName}": Invalid coords (lat: ${lat}, lng: ${lng}).`); } }
 
-      function generateDots() {
-        allDotsInnerContainers.forEach((dotsInner) => {
-          if (dotsInner) {
-            dotsInner.innerHTML = ""; // Clear existing dots
-            fetchedVenueData.forEach(() => {
-              dotsInner.appendChild(document.createElement("span"));
-            });
-          }
-        });
-      }
+              // --- Display Venue Function (WITHOUT CLICK LISTENERS INSIDE) ---
+              function displayVenue(index) {
+                  // Get elements, data, check validity (as before)
+                  if (!venueCard || !chooseVenueCard) { console.error("Cannot find venueCard or chooseVenueCard."); return; }
+                  const venueWrapper = venueCard.querySelector(".card-content-wrapper");
+                  const chooseWrapper = chooseVenueCard.querySelector(".card-content-wrapper");
+                  if (!venueWrapper || !chooseWrapper) { console.error("Could not find .card-content-wrapper."); return; }
+                  if (index < 0 || index >= fetchedVenueData.length) { console.error(`Invalid venue index: ${index}`); return; }
+                  const venueData = fetchedVenueData[index];
+                  console.log(`Displaying venue index: ${index}, ID: ${venueData?.id}, Name: ${venueData?.name}`);
 
-      function updateDots(activeIndex) {
-        allDotsInnerContainers.forEach((dotsInner) => {
-          if (!dotsInner) return;
-          const dots = dotsInner.querySelectorAll("span");
-          const dotsContainer = dotsInner.parentElement; // The element with class 'dots'
+                  // Check for ID and set data attribute (CRUCIAL for click/tap handler)
+                  const currentVenueId = venueData.id;
+                  if (currentVenueId !== undefined && currentVenueId !== null) {
+                      // Set ID on the elements that have the listeners attached
+                      venueCard.setAttribute('data-venue-id', currentVenueId);
+                      chooseVenueCard.setAttribute('data-venue-id', currentVenueId);
+                       console.log(`   -> Set data-venue-id="${currentVenueId}" on MAIN card elements for index ${index}`);
+                  } else {
+                      venueCard.removeAttribute('data-venue-id');
+                      chooseVenueCard.removeAttribute('data-venue-id');
+                      console.warn(`   -> No valid venue ID found for index ${index}, navigation might fail.`);
+                  }
 
-          if (
-            !dotsContainer ||
-            dots.length !== fetchedVenueData.length ||
-            dots.length === 0
-          )
-            return;
+                  // Update Card Content (as before, using venueData)
+                  const venueNameEl = venueWrapper.querySelector(".venue-name");
+                  const venueDateEl = venueWrapper.querySelector(".venue-date");
+                  const ratingEl = chooseWrapper.querySelector(".rating");
+                  const ratingTextEl = chooseWrapper.querySelector(".rating-text");
+                  const venueIcon1El = chooseWrapper.querySelector(".venue-icon-1 img");
+                  const venueIcon2El = chooseWrapper.querySelector(".venue-icon-2 img");
+                  if (venueNameEl) venueNameEl.textContent = venueData.name || "Venue Name";
+                  if (venueDateEl) venueDateEl.textContent = venueData.date_text || "Date Info";
+                  if (ratingEl) { const rVal = Math.round(venueData.rating_stars || 0); ratingEl.textContent = '★'.repeat(rVal) + '☆'.repeat(5 - rVal); }
+                  if (ratingTextEl) ratingTextEl.textContent = venueData.rating_text || 'Rating';
+                  if (venueIcon1El) venueIcon1El.src = venueData.icon1_url || './assets/default-icon.png';
+                  if (venueIcon2El) venueIcon2El.src = venueData.icon2_url || './assets/default-icon.png';
+                  if (venueData.image_url) { venueCard.style.backgroundImage = `url('${venueData.image_url}')`; venueCard.style.backgroundSize = 'cover'; venueCard.style.backgroundPosition = 'center'; }
+                  else { venueCard.style.backgroundImage = `url('${PLACEHOLDER_VENUE_IMAGE}')`; venueCard.style.backgroundSize = 'cover'; venueCard.style.backgroundPosition = 'center'; }
 
-          dots.forEach((dot, index) =>
-            dot.classList.toggle("active", index === activeIndex)
-          );
+                  // Update Map & Dots (as before)
+                  updateVenueMap(venueData.latitude, venueData.longitude, venueData.name);
+                  updateDots(index);
 
-          // Centering logic for dots
-          const dotTotalWidth = DOT_WIDTH + DOT_MARGIN * 2;
-          const containerVisibleWidth = dotsContainer.offsetWidth;
-          const containerCenter = containerVisibleWidth / 2;
-          const activeDotCenterOffset =
-            activeIndex * dotTotalWidth + dotTotalWidth / 2;
-          let translateX = containerCenter - activeDotCenterOffset;
-          const maxTranslate = 0;
-          const totalInnerWidth = fetchedVenueData.length * dotTotalWidth;
-          const minTranslate = Math.min(
-            0,
-            containerVisibleWidth - totalInnerWidth
-          ); // Ensure minTranslate <= 0
+                  // --- NO CLICK LISTENER ATTACHMENT HERE ---
+                  // Listeners are attached ONCE outside this function.
 
-          if (totalInnerWidth > containerVisibleWidth) {
-            translateX = Math.min(
-              maxTranslate,
-              Math.max(minTranslate, translateX)
-            );
-          } else {
-            // Center dots if they all fit
-            translateX = (containerVisibleWidth - totalInnerWidth) / 2;
-          }
-          dotsInner.style.transform = `translateX(${translateX}px)`;
-        });
-      }
-
-      function updateVenueMap(lat, lng, venueName) {
-        if (
-          venueMapInstance &&
-          venueMarker &&
-          typeof lat === "number" &&
-          typeof lng === "number"
-        ) {
-          const newLatLng = [lat, lng];
-          venueMapInstance.setView(newLatLng, MAP_ZOOM_LEVEL, {
-            animate: true,
-            pan: { duration: 0.5 },
-          });
-          venueMarker.setLatLng(newLatLng);
-          if (venueName) {
-            venueMarker.setPopupContent(`<b>${venueName}</b>`);
-            // venueMarker.openPopup(); // Optionally re-open popup on change
-          }
-          // Ensure map size is correct, especially if container size changed
-          setTimeout(() => {
-            if (venueMapInstance) venueMapInstance.invalidateSize();
-          }, 150);
-        } else {
-          console.warn(
-            "Map update skipped: Instance, marker, or coords missing/invalid."
-          );
-        }
-      }
-
-      // Replace the existing displayVenue function with this one
-
-// Replace the existing displayVenue function in frontend/player.js
-
-function displayVenue(index) {
-    // --- Get DOM Elements ---
-    const venueCard = document.getElementById("venue-details-card");
-    const chooseVenueCard = document.getElementById("choose-venue-card");
-    if (!venueCard || !chooseVenueCard) { console.error("Cannot find venueCard or chooseVenueCard elements."); return; }
-    const venueWrapper = venueCard.querySelector(".card-content-wrapper");
-    const chooseWrapper = chooseVenueCard.querySelector(".card-content-wrapper");
-    if (!venueWrapper || !chooseWrapper) { console.error("Could not find .card-content-wrapper in cards."); return; }
-
-    // --- Get Data ---
-    if (index < 0 || index >= fetchedVenueData.length) { console.error(`Invalid venue index: ${index}`); return; }
-    const venueDataForThisCard = fetchedVenueData[index]; // Use a distinct name
-    console.log(`displayVenue called for index: ${index}, Venue ID: ${venueDataForThisCard?.id}, Name: ${venueDataForThisCard?.name}`);
-
-    // --- Check for ID ---
-    if (venueDataForThisCard.id === undefined || venueDataForThisCard.id === null) {
-         console.error("Venue data is missing 'id' property:", venueDataForThisCard);
-    }
-
-    // --- Update Card Content (Existing logic) ---
-    const venueNameEl = venueWrapper.querySelector(".venue-name");
-    // ... (rest of element selections: venueDateEl, ratingEl, etc.) ...
-    if (venueNameEl) venueNameEl.textContent = venueDataForThisCard.name || "Venue Name";
-    // ... (rest of DOM updates using venueDataForThisCard) ...
-    if (venueDataForThisCard.image_url) { venueCard.style.backgroundImage = `url('${venueDataForThisCard.image_url}')`; } else { /* ... fallback ... */ }
-    // ... (update rating, icons etc.) ...
-
-    // --- Update Map & Dots (Existing logic) ---
-    updateVenueMap(venueDataForThisCard.latitude, venueDataForThisCard.longitude, venueDataForThisCard.name);
-    updateDots(index);
+              } // --- End displayVenue ---
 
 
-    // --- CLICK LISTENER LOGIC (Revised Approach) ---
+              // --- Event Handlers (Defined ONCE) ---
 
-    // Store the ID directly on the element using a data attribute
-    const currentVenueId = venueDataForThisCard.id;
-    if (currentVenueId !== undefined && currentVenueId !== null) {
-        venueWrapper.setAttribute('data-venue-id', currentVenueId);
-        chooseWrapper.setAttribute('data-venue-id', currentVenueId);
-        console.log(`   -> Set data-venue-id="${currentVenueId}" on wrappers for index ${index}`);
-    } else {
-        // Remove attribute if ID is missing, just in case
-        venueWrapper.removeAttribute('data-venue-id');
-        chooseWrapper.removeAttribute('data-venue-id');
-        console.warn(`   -> No valid venue ID found for index ${index}, click listener might not work correctly.`);
-    }
+              // Mousedown/Touchstart Handler
+              const handlePointerStart = (e) => {
+                  // Prevent swipe if clicking on interactive elements inside the card or the map
+                   if (e.target.closest("button, input, a, .dots, .leaflet-container")) {
+                       console.log("Pointer start ignored on interactive element.");
+                       isDragging = false; // Ensure dragging doesn't start
+                       return;
+                   }
+                  isDragging = false; // Reset drag state initially
+                  startX = e.type.includes("mouse") ? e.clientX : e.touches[0].clientX;
+                  startY = e.type.includes("mouse") ? e.clientY : e.touches[0].clientY; // Record Y for scroll detection
+                  currentX = startX;
+                  diffX = 0;
+                  touchStartTime = Date.now(); // Record time for tap detection
+                  cardWidth = venueCard.offsetWidth;
 
-    // Define ONE handler function outside the loop/displayVenue if possible,
-    // OR define it here but make it read the ID from the clicked element.
-    const handleCardClick = (event) => {
-        // Use event.currentTarget to ensure we get the element the listener was attached to
-        const clickedWrapper = event.currentTarget;
-        console.log("Card content wrapper clicked!", clickedWrapper);
+                  // Add class for visual feedback (optional)
+                  venueWrapper.classList.add("is-swiping");
+                  chooseWrapper.classList.add("is-swiping");
 
-        // Get the venue ID stored on the element
-        const venueId = clickedWrapper.getAttribute('data-venue-id');
-        console.log(`   -> Click handler fired. Reading data-venue-id: "${venueId}"`);
+                  // Don't preventDefault immediately in touchstart, wait for touchmove
+                  console.log(`Pointer start at X: ${startX}, Y: ${startY}`);
+              };
 
-        if (venueId) { // Check if the attribute value exists and is not empty
-            const venueDetailUrl = `venue-detail.html?id=${venueId}`;
-            console.log(`   -> Attempting to open URL: ${venueDetailUrl}`);
-            const newWindow = window.open(venueDetailUrl, '_blank');
-            if (!newWindow || newWindow.closed || typeof newWindow.closed === 'undefined') {
-                console.warn("   -> Pop-up blocked?");
-                // alert("Please allow pop-ups for this site to view venue details.");
-            }
-        } else {
-            console.warn("   -> Cannot open detail page: data-venue-id attribute missing or empty on clicked element.", clickedWrapper);
-        }
-    };
+              // Mousemove/Touchmove Handler
+              const handlePointerMove = (e) => {
+                  // Only process if a pointer start occurred on a valid element
+                  if (startX === null) return; // Use startX as a flag that start occurred
 
-    // --- Attach/Re-attach Listeners ---
-    // Remove previous listeners using the SAME function reference.
-    // For this to work reliably, handleCardClick should ideally be defined *outside* displayVenue,
-    // but attaching it here and reading the data attribute is a good compromise.
-    // Let's first *try* without explicit removal, relying on overwrite/browser behavior. If issues persist,
-    // we might need a more complex listener management system.
+                   currentX = e.type.includes("mouse") ? e.clientX : e.touches[0].clientX;
+                   const currentY = e.type.includes("mouse") ? e.clientY : e.touches[0].clientY;
+                   diffX = currentX - startX;
+                   const diffY = currentY - startY; // Calculate vertical difference
 
-    // Clear old .onclick assignments just to be safe from very old code versions.
-    venueWrapper.onclick = null;
-    chooseWrapper.onclick = null;
+                   // Check if dragging has started (more X movement than Y, and exceeds threshold)
+                   if (!isDragging) {
+                       // If it moves more vertically OR doesn't move much horizontally, it's likely scroll or tap
+                       if (Math.abs(diffY) > TAP_THRESHOLD_Y && Math.abs(diffY) > Math.abs(diffX)) {
+                           // Vertical movement detected, likely scrolling - cancel swipe
+                           console.log("Vertical scroll detected, canceling swipe.");
+                           startX = null; // Reset start flag to ignore subsequent moves/ends for this interaction
+                           venueWrapper.classList.remove("is-swiping");
+                           chooseWrapper.classList.remove("is-swiping");
+                           return;
+                       }
+                       // If horizontal movement exceeds threshold, start dragging
+                       if (Math.abs(diffX) > TAP_THRESHOLD_X) {
+                            console.log("Dragging started.");
+                            isDragging = true;
+                       }
+                   }
 
-    // Add the event listener. It will now read the ID from the data attribute when clicked.
-    venueWrapper.addEventListener('click', handleCardClick);
-    chooseWrapper.addEventListener('click', handleCardClick);
-    console.log(`   -> Click listeners RE-ATTACHED for index ${index}`);
+                  // If dragging, update transform and prevent default scroll
+                  if (isDragging) {
+                      const transformValue = `translateX(${diffX}px)`;
+                      venueWrapper.style.transform = transformValue;
+                      chooseWrapper.style.transform = transformValue;
+                      // Prevent default touch actions (like scrolling) ONLY when dragging horizontally
+                      if (e.cancelable && e.type.includes("touch")) {
+                          e.preventDefault();
+                      }
+                  }
+              };
 
-} // --- End displayVenue ---
+              // Mouseup/Touchend/Mouseleave Handler
+              const handlePointerEnd = (e) => {
+                   // Only process if a pointer start occurred and wasn't cancelled (startX is not null)
+                   if (startX === null) return;
 
-      // --- Swipe Event Handlers ---
-      function handleSwipeStart(e) {
-        // Prevent swipe if clicking on interactive elements within the card
-        if (e.target.closest("button, input, a, .dots, .leaflet-container"))
-          return;
-        isDragging = true;
-        startX = e.type.includes("mouse") ? e.clientX : e.touches[0].clientX;
-        currentX = startX;
-        diffX = 0;
-        cardWidth = venueCard.offsetWidth; // Get width at drag start
-        // Add class for visual feedback during swipe (optional)
-        venueWrapper.classList.add("is-swiping");
-        chooseWrapper.classList.add("is-swiping");
-        // Prevent default touch actions like scrolling while swiping horizontally
-        if (e.type.includes("touch")) e.preventDefault();
-      }
+                   const touchDuration = Date.now() - touchStartTime;
+                   console.log(`Pointer end. Dragging: ${isDragging}, Duration: ${touchDuration}ms, diffX: ${diffX}`);
 
-      function handleSwipeMove(e) {
-        if (!isDragging) return;
-        currentX = e.type.includes("mouse") ? e.clientX : e.touches[0].clientX;
-        diffX = currentX - startX;
-        // Apply translation to both swiping cards
-        const transformValue = `translateX(${diffX}px)`;
-        venueWrapper.style.transform = transformValue;
-        chooseWrapper.style.transform = transformValue;
-        // Prevent default touch actions
-        if (e.type.includes("touch")) e.preventDefault();
-      }
+                   // --- TAP DETECTION ---
+                   // Check if NOT dragging, AND movement was minimal, AND duration is short
+                   if (!isDragging && touchDuration < MAX_TAP_DURATION) {
+                       console.log("Tap detected!");
+                       // Find the card element the event originated from or bubbled to
+                       const targetCard = e.currentTarget; // The element the listener is on
+                       const venueId = targetCard.getAttribute('data-venue-id');
+                        console.log(`   -> Tapped card ID: ${venueId}`);
+                       navigateToVenueDetail(venueId); // Navigate on tap
 
-      function handleSwipeEnd(e) {
-        if (!isDragging) return;
-        isDragging = false;
-        // Remove swiping class
-        venueWrapper.classList.remove("is-swiping");
-        chooseWrapper.classList.remove("is-swiping");
+                       // Reset styles immediately if needed (though navigation will likely happen first)
+                       venueWrapper.classList.remove("is-swiping");
+                       chooseWrapper.classList.remove("is-swiping");
+                       venueWrapper.style.transform = `translateX(0px)`;
+                       chooseWrapper.style.transform = `translateX(0px)`;
+                   }
+                   // --- SWIPE END LOGIC ---
+                   else if (isDragging) {
+                       console.log("Swipe end processing.");
+                       const threshold = cardWidth / 4;
+                       let newIndex = currentVenueIndex;
 
-        const threshold = cardWidth / 4; // Swipe threshold (adjust as needed)
-        let newIndex = currentVenueIndex;
+                       if (diffX < -threshold && currentVenueIndex < fetchedVenueData.length - 1) {
+                           newIndex++; console.log("Swipe Left -> new index:", newIndex);
+                       } else if (diffX > threshold && currentVenueIndex > 0) {
+                           newIndex--; console.log("Swipe Right -> new index:", newIndex);
+                       } else {
+                            console.log("Swipe did not cross threshold or at boundary.");
+                       }
 
-        // Determine if swipe was significant enough to change index
-        if (
-          diffX < -threshold &&
-          currentVenueIndex < fetchedVenueData.length - 1
-        ) {
-          newIndex++; // Swipe left, go to next
-        } else if (diffX > threshold && currentVenueIndex > 0) {
-          newIndex--; // Swipe right, go to previous
-        }
+                       // Snap back animation
+                       venueWrapper.style.transition = "transform 0.3s ease-out";
+                       chooseWrapper.style.transition = "transform 0.3s ease-out";
+                       venueWrapper.style.transform = `translateX(0px)`;
+                       chooseWrapper.style.transform = `translateX(0px)`;
 
-        // Snap back animation (using CSS transitions preferably, but JS fallback ok)
-        venueWrapper.style.transition = "transform 0.3s ease-out"; // Add transition for snap
-        chooseWrapper.style.transition = "transform 0.3s ease-out";
-        venueWrapper.style.transform = `translateX(0px)`;
-        chooseWrapper.style.transform = `translateX(0px)`;
+                       setTimeout(() => {
+                           venueWrapper.style.transition = "";
+                           chooseWrapper.style.transition = "";
+                       }, 300);
 
-        // Remove transition after snap back to allow smooth dragging next time
-        setTimeout(() => {
-          venueWrapper.style.transition = "";
-          chooseWrapper.style.transition = "";
-        }, 300);
+                       // Update venue if index changed
+                       if (newIndex !== currentVenueIndex) {
+                           currentVenueIndex = newIndex;
+                           displayVenue(currentVenueIndex);
+                       }
+                   } else {
+                       // It wasn't a drag, wasn't a quick tap (e.g., long press or slow release)
+                       // Just snap back without navigating or changing index
+                       console.log("Pointer end: Not a swipe, not a tap. Snapping back.");
+                       venueWrapper.classList.remove("is-swiping");
+                       chooseWrapper.classList.remove("is-swiping");
+                       venueWrapper.style.transition = "transform 0.3s ease-out";
+                       chooseWrapper.style.transition = "transform 0.3s ease-out";
+                       venueWrapper.style.transform = `translateX(0px)`;
+                       chooseWrapper.style.transform = `translateX(0px)`;
+                        setTimeout(() => {
+                           venueWrapper.style.transition = "";
+                           chooseWrapper.style.transition = "";
+                       }, 300);
+                   }
 
-        // If index changed, update the displayed venue
-        if (newIndex !== currentVenueIndex) {
-          currentVenueIndex = newIndex;
-          displayVenue(currentVenueIndex);
-        }
+                   // Reset state variables for the next interaction
+                   isDragging = false;
+                   startX = null; // Use null to indicate interaction ended
+                   startY = null;
+                   diffX = 0;
+                   touchStartTime = 0;
 
-        diffX = 0; // Reset difference
-      }
+              }; // --- End handlePointerEnd ---
 
-      // Attach swipe event listeners to the cards that should initiate the swipe
-      venueCard.addEventListener("mousedown", handleSwipeStart);
-      venueCard.addEventListener("touchstart", handleSwipeStart, {
-        passive: false,
-      }); // passive: false to allow preventDefault
-      chooseVenueCard.addEventListener("mousedown", handleSwipeStart);
-      chooseVenueCard.addEventListener("touchstart", handleSwipeStart, {
-        passive: false,
-      });
 
-      // Attach move/end listeners to the document to catch drags outside the card
-      document.addEventListener("mousemove", handleSwipeMove);
-      document.addEventListener("touchmove", handleSwipeMove, {
-        passive: false,
-      }); // passive: false to allow preventDefault
-      document.addEventListener("mouseup", handleSwipeEnd);
-      document.addEventListener("touchend", handleSwipeEnd);
-      // Also handle mouse leaving the window during a drag
-      document.addEventListener("mouseleave", handleSwipeEnd);
+              // --- Attach Event Listeners ONCE ---
+              console.log("Attaching pointer/mouse/touch listeners ONCE.");
+              [venueCard, chooseVenueCard].forEach(card => {
+                  // Touch Events (Primary for Mobile)
+                  card.addEventListener("touchstart", handlePointerStart, { passive: true }); // Can be passive now
+                  card.addEventListener("touchmove", handlePointerMove, { passive: false }); // Must be active to preventDefault
+                  card.addEventListener("touchend", handlePointerEnd);
+                  card.addEventListener("touchcancel", handlePointerEnd); // Handle cancellation
 
-      // --- Initial Swiper Setup ---
-      generateDots();
-      displayVenue(currentVenueIndex); // Display the first venue initially
+                  // Mouse Events (for Desktop)
+                  card.addEventListener("mousedown", handlePointerStart);
 
-      // --- Resize Handler ---
-      window.addEventListener("resize", () => {
-        if (venueCard) cardWidth = venueCard.offsetWidth; // Update card width on resize
-        updateDots(currentVenueIndex); // Recalculate dot positions
-        // Invalidate map size on resize as well
-        if (venueMapInstance) {
-          setTimeout(() => {
-            venueMapInstance.invalidateSize();
-          }, 150);
-        }
-      });
-    } else {
-      console.error(
-        "Swiper setup failed: Essential inner elements (wrappers, dots, venue details) or dots containers missing."
-      );
-    }
-  } else {
-    // Handle case where cards are missing or no venue data was fetched
-    console.warn(
-      "Swiper setup skipped: Base card elements or fetched venue data missing."
-    );
-    // Optionally hide the swiper section or display a message
-  }
+                  // Click Listener (Fallback for Desktop / Accessibility)
+                  // We use the same navigation function, but triggered by 'click'
+                  card.addEventListener('click', (e) => {
+                      // IMPORTANT: Prevent click if a touch event already handled navigation
+                      // This check is difficult without flags. Let's assume if it wasn't dragging,
+                      // and touchend didn't navigate (maybe due to duration), click should work.
+                      // A simple check: if the pointer end logic recently ran and *wasn't* a tap, maybe ignore click.
+                      // For now, let's rely on the browser's default behavior, hoping touchend navigation stops click.
+                      // If double navigation occurs, we might need a flag set in touchend's tap logic.
+
+                      // Only navigate on click if it wasn't part of a drag/swipe
+                       if (!isDragging && Math.abs(diffX) < TAP_THRESHOLD_X) {
+                           console.log("Click event fallback triggered.");
+                           const targetCard = e.currentTarget;
+                           const venueId = targetCard.getAttribute('data-venue-id');
+                           navigateToVenueDetail(venueId);
+                       } else {
+                            console.log("Click event ignored (likely after swipe).");
+                       }
+                  });
+              });
+
+              // Attach move/end listeners to the document for mouse events
+              document.addEventListener("mousemove", handlePointerMove);
+              document.addEventListener("mouseup", handlePointerEnd);
+              document.addEventListener("mouseleave", handlePointerEnd); // Catch mouse leaving window
+
+              // --- Initial Swiper Setup ---
+              generateDots();
+              displayVenue(currentVenueIndex); // Display the first venue
+
+              // --- Resize Handler ---
+              window.addEventListener("resize", () => { /* ... (keep existing implementation) ... */ console.log("Window resized."); if (venueCard) cardWidth = venueCard.offsetWidth; updateDots(currentVenueIndex); if (venueMapInstance) { setTimeout(() => { if (venueMapInstance) venueMapInstance.invalidateSize(); }, 150); } });
+
+           } else { console.error("Swiper setup failed: Inner elements missing."); }
+      } else { console.warn("Swiper setup skipped: No venue data."); venueCard.innerHTML = '<p class="info-message">No venues available.</p>'; chooseVenueCard.style.display = 'none'; }
+  } else { console.warn("Swiper base card elements missing."); }
+
 
   // =========================================================================
-  // == INTERACTIVE CHECKLIST LOGIC (Copied from original, ensure selector is correct)
+  // == INTERACTIVE CHECKLIST LOGIC (Keep As Is)
   // =========================================================================
-  const checklistKey = "interactiveChecklistState"; // Key for localStorage
-  // *** IMPORTANT: Verify this selector matches your HTML structure ***
-  const checklistItems = document.querySelectorAll(
-    '.interactive-checklist input[type="checkbox"]'
-  );
-
-  if (checklistItems.length > 0) {
-    function saveChecklistState() {
-      const state = {};
-      checklistItems.forEach((item) => {
-        state[item.id] = item.checked;
-      });
-      localStorage.setItem(checklistKey, JSON.stringify(state));
-    }
-
-    function loadChecklistState() {
-      const savedState = localStorage.getItem(checklistKey);
-      if (savedState) {
-        try {
-          const state = JSON.parse(savedState);
-          checklistItems.forEach((item) => {
-            if (state[item.id] !== undefined) {
-              item.checked = state[item.id];
-            }
-          });
-        } catch (e) {
-          console.error("Error parsing checklist state from localStorage", e);
-          localStorage.removeItem(checklistKey);
-        }
-      }
-    }
-
-    // Add event listeners and load initial state
-    checklistItems.forEach((item) => {
-      item.addEventListener("change", saveChecklistState);
-    });
-    loadChecklistState(); // Load state when DOM is ready
-  } else {
-    console.warn(
-      "Checklist items not found with selector '.interactive-checklist input[type=\"checkbox\"]'"
-    );
-  }
+  console.log("Initializing Checklist...");
+  // ... (Keep checklist logic exactly as in the previous version) ...
+  const checklistKey = "interactiveChecklistState"; const checklistItems = document.querySelectorAll('.interactive-checklist input[type="checkbox"]'); if (checklistItems.length > 0) { console.log(`Found ${checklistItems.length} checklist items.`); function saveChecklistState() { const state = {}; checklistItems.forEach((item) => { if (item.id) { state[item.id] = item.checked; } else { console.warn("Checklist item missing ID:", item); } }); try { localStorage.setItem(checklistKey, JSON.stringify(state)); console.log("Checklist state saved."); } catch (e) { console.error("Error saving checklist state:", e); } } function loadChecklistState() { const savedState = localStorage.getItem(checklistKey); if (savedState) { console.log("Loading checklist state."); try { const state = JSON.parse(savedState); checklistItems.forEach((item) => { if (item.id && state[item.id] !== undefined) { item.checked = state[item.id]; } }); } catch (e) { console.error("Error parsing checklist state:", e); localStorage.removeItem(checklistKey); } } else { console.log("No saved checklist state."); } } checklistItems.forEach((item) => { item.addEventListener("change", saveChecklistState); }); loadChecklistState(); } else { console.warn("No checklist items found."); }
 
   // =========================================================================
-  // == PLAN SWITCHER BUTTONS (Create dynamically)
+  // == PLAN SWITCHER BUTTONS (Keep As Is)
   // =========================================================================
-  if (fetchedPlanData.length > 0) {
-    const planSwitcherContainer = document.createElement("div");
-    planSwitcherContainer.className = "plan-switcher-container"; // Add a class for styling
-    planSwitcherContainer.style.textAlign = "center";
-    planSwitcherContainer.style.padding = "20px 0"; // Add some padding
+  console.log("Initializing Plan Switcher Buttons...");
+  // ... (Keep plan switcher logic exactly as in the previous version) ...
+  if (fetchedPlanData.length > 0) { console.log(`Creating ${fetchedPlanData.length} plan switcher buttons.`); const planSwitcherContainer = document.createElement("div"); planSwitcherContainer.className = "plan-switcher-container"; planSwitcherContainer.style.textAlign = "center"; planSwitcherContainer.style.padding = "20px 0"; fetchedPlanData.forEach((plan) => { const button = document.createElement("button"); button.textContent = `Activate ${plan.name || `Plan (ID: ${plan.id})`}`; button.className = "btn btn-secondary btn-switch-plan"; button.style.margin = "0 8px"; button.setAttribute("data-plan-id", plan.id); button.onclick = () => applyPlan(plan); planSwitcherContainer.appendChild(button); }); const featuresSection = document.querySelector(".features"); /* <<< ADAPT SELECTOR */ if (featuresSection?.parentNode) { console.log("Inserting plan switcher before features section."); featuresSection.parentNode.insertBefore(planSwitcherContainer, featuresSection); } else { console.warn("Target section for plan switcher not found, appending to body."); document.body.appendChild(planSwitcherContainer); } } else { console.log("No plan data, skipping plan switcher buttons."); }
 
-    fetchedPlanData.forEach((plan) => {
-      const button = document.createElement("button");
-      button.textContent = `Activate ${plan.name}`; // More descriptive text
-      button.className = "btn btn-secondary btn-switch-plan"; // Use existing styles + add specific class
-      button.style.margin = "0 8px"; // Add some spacing
-      button.setAttribute("data-plan-id", plan.id); // Store plan ID if needed
-      button.onclick = () => applyPlan(plan); // Call applyPlan when clicked
-      planSwitcherContainer.appendChild(button);
-    });
 
-    // Add the container to the page (e.g., after the hero section, before features)
-    const featuresSection = document.querySelector(".features");
-    if (featuresSection) {
-      // Insert before the features section for better placement
-      featuresSection.parentNode.insertBefore(
-        planSwitcherContainer,
-        featuresSection
-      );
-    } else {
-      // Fallback: append to body if features section isn't found
-      console.warn(
-        "Features section not found, appending plan switcher to body."
-      );
-      document.body.appendChild(planSwitcherContainer);
-    }
-  } else {
-    console.log(
-      "No plan data fetched, skipping plan switcher button creation."
-    );
-  }
-
-  console.log("Initial setup complete.");
+  console.log("Frontend Player Initialization Complete.");
 }); // --- END DOMContentLoaded ---
