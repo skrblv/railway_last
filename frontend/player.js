@@ -56,16 +56,111 @@ async function fetchPlans() { /* ... (Keep implementation from previous version)
 // =========================================================================
 // == Plan Application & Audio Handling (Keep As Is)
 // =========================================================================
-function applyPlan(plan) { /* ... (Keep implementation from previous version, including handleMetadataLoad, handleAudioError defined outside) ... */
-    const body = document.body; const musicPlayer = document.querySelector(".music-player"); const audioPlayer = document.getElementById("audio-player"); const albumArt = musicPlayer?.querySelector(".album-art img"); const trackTitleEl = musicPlayer?.querySelector("#track-title"); const artistNameEl = musicPlayer?.querySelector("#artist-name"); const progress = document.getElementById("progress"); const currentTimeEl = document.getElementById("current-time"); const totalTimeEl = document.getElementById("total-time"); const playPauseIcon = document.getElementById("play-pause-icon"); const playIconSvg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" width="36px" height="36px"><path d="M8 5v14l11-7z"/></svg>`;
-    if (!plan) { console.log("Applying default state (no plan)."); currentPlan = null; body.classList.remove("theme-positive", "theme-sad"); if (audioPlayer) { if (!audioPlayer.paused) audioPlayer.pause(); audioPlayer.src = ""; } if (albumArt) { albumArt.src = PLACEHOLDER_ALBUM_ART; albumArt.alt = "Album Art"; } if (trackTitleEl) trackTitleEl.textContent = "Track Title"; if (artistNameEl) artistNameEl.textContent = "Artist Name"; if (progress) progress.style.width = "0%"; if (currentTimeEl) currentTimeEl.textContent = "0:00"; if (totalTimeEl) totalTimeEl.textContent = "0:00"; if (playPauseIcon) playPauseIcon.innerHTML = playIconSvg; if(audioPlayer) { audioPlayer.removeEventListener("loadedmetadata", handleMetadataLoad); audioPlayer.removeEventListener("error", handleAudioError); } return; }
-    console.log("Applying Plan:", plan.name || `(ID: ${plan.id})`); currentPlan = plan;
-    body.classList.remove("theme-positive", "theme-sad"); if (plan.theme === "positive") { body.classList.add("theme-positive"); } else if (plan.theme === "sad") { body.classList.add("theme-sad"); } else { console.warn(`Plan '${plan.name}' has unknown theme:`, plan.theme); }
-    if (!musicPlayer || !audioPlayer) { console.warn("Music player elements missing."); return; }
-    let wasPlaying = !audioPlayer.paused && audioPlayer.currentTime > 0;
-    if (plan.song_url && audioPlayer.currentSrc !== plan.song_url) { console.log("Setting new audio source:", plan.song_url); audioPlayer.src = plan.song_url; audioPlayer.load(); } else if (!plan.song_url) { console.warn(`Plan "${plan.name}" has no song_url.`); if (!audioPlayer.paused) audioPlayer.pause(); audioPlayer.src = ""; wasPlaying = false; } else { console.log("Audio source is the same."); }
-    if (albumArt) { albumArt.src = plan.album_art_url || PLACEHOLDER_ALBUM_ART; albumArt.alt = plan.track_title || "Album Art"; } if (trackTitleEl) trackTitleEl.textContent = plan.track_title || "Unknown Track"; if (artistNameEl) artistNameEl.textContent = plan.artist_name || "Unknown Artist"; if (progress) progress.style.width = "0%"; if (currentTimeEl) currentTimeEl.textContent = "0:00"; if (totalTimeEl) totalTimeEl.textContent = "0:00"; if (playPauseIcon && audioPlayer.paused) playPauseIcon.innerHTML = playIconSvg;
-    audioPlayer.removeEventListener("loadedmetadata", handleMetadataLoad); audioPlayer.removeEventListener("error", handleAudioError); const metadataHandler = () => handleMetadataLoad(wasPlaying, plan.song_url); audioPlayer.addEventListener("loadedmetadata", metadataHandler, { once: true }); audioPlayer.addEventListener("error", handleAudioError, { once: true });
+function applyPlan(plan) {
+    const body = document.body;
+    const musicPlayer = document.querySelector(".music-player");
+    const audioPlayer = document.getElementById("audio-player");
+    // *** ИСПРАВЛЕННЫЙ СЕЛЕКТОР ***
+    const albumArt = musicPlayer?.querySelector("img.album-art");
+    const trackTitleEl = musicPlayer?.querySelector("#track-title");
+    const artistNameEl = musicPlayer?.querySelector("#artist-name");
+    const progress = document.getElementById("progress");
+    const currentTimeEl = document.getElementById("current-time");
+    const totalTimeEl = document.getElementById("total-time");
+    const playPauseIcon = document.getElementById("play-pause-icon");
+    const playIconSvg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" width="36px" height="36px"><path d="M8 5v14l11-7z"/></svg>`;
+
+    // --- Сброс, если план null ---
+    if (!plan) { console.log("Applying default state (no plan)."); currentPlan = null; body.classList.remove("theme-positive", "theme-sad"); if (audioPlayer) { if (!audioPlayer.paused) audioPlayer.pause(); audioPlayer.src = ""; } if (albumArt) { albumArt.src = PLACEHOLDER_ALBUM_ART; albumArt.alt = "Album Art"; albumArt.onerror = null; albumArt.onload = null; } if (trackTitleEl) trackTitleEl.textContent = "Track Title"; if (artistNameEl) artistNameEl.textContent = "Artist Name"; if (progress) progress.style.width = "0%"; if (currentTimeEl) currentTimeEl.textContent = "0:00"; if (totalTimeEl) totalTimeEl.textContent = "0:00"; if (playPauseIcon) playPauseIcon.innerHTML = playIconSvg; if(audioPlayer) { audioPlayer.removeEventListener("loadedmetadata", handleMetadataLoad); audioPlayer.removeEventListener("error", handleAudioError); } return; }
+
+    // --- Применение конкретного плана ---
+    console.log(`[ApplyPlan] Applying Plan: "${plan.name || 'Unnamed'}" (ID: ${plan.id})`);
+    currentPlan = plan;
+
+    // 1. Применить тему
+    body.classList.remove("theme-positive", "theme-sad");
+    if (plan.theme === "positive") body.classList.add("theme-positive");
+    else if (plan.theme === "sad") body.classList.add("theme-sad");
+
+    // 2. Обновить плеер
+    if (!musicPlayer || !audioPlayer) { console.warn("[ApplyPlan] Music player elements missing."); return; }
+
+    let wasPlaying = !audioPlayer.paused && audioPlayer.currentTime > 0 && audioPlayer.src;
+
+    // Обновить аудиоисточник
+    const newSongUrl = plan.song_url;
+    const currentFullSrc = audioPlayer.src;
+    if (newSongUrl && currentFullSrc !== newSongUrl) { audioPlayer.src = newSongUrl; audioPlayer.load(); }
+    else if (!newSongUrl) { audioPlayer.pause(); audioPlayer.src = ""; wasPlaying = false; }
+
+    // Обновить метаданные (Тайтл, Артист)
+    if (trackTitleEl) trackTitleEl.textContent = plan.track_title || "Unknown Track";
+    if (artistNameEl) artistNameEl.textContent = plan.artist_name || "Unknown Artist";
+
+    // --- *** ОБНОВЛЕНИЕ ОБЛОЖКИ АЛЬБОМА (С ПРАВИЛЬНЫМ СЕЛЕКТОРОМ) *** ---
+    console.log("[AlbumArt Debug] Finding album art element using 'img.album-art'...");
+    if (albumArt) {
+        console.log("[AlbumArt Debug] Element found:", albumArt);
+        const defaultArtSrc = PLACEHOLDER_ALBUM_ART;
+        const planArtUrl = plan.album_art_url;
+        const targetAlbumArtSrc = planArtUrl || defaultArtSrc;
+
+        console.log(`[AlbumArt Debug] Plan URL: "${planArtUrl}"`);
+        console.log(`[AlbumArt Debug] Target SRC: "${targetAlbumArtSrc}"`);
+        console.log(`[AlbumArt Debug] Current SRC: "${albumArt.src}"`);
+
+        // Убираем старые обработчики
+        albumArt.onerror = null;
+        albumArt.onload = null;
+
+        // Обновляем src ТОЛЬКО если он отличается
+        if (albumArt.src !== targetAlbumArtSrc) {
+            console.log(`[AlbumArt Debug] SRC differs. Setting new SRC.`);
+            albumArt.src = targetAlbumArtSrc; // Устанавливаем новый источник
+
+            // Добавляем обработчики для нового источника
+            albumArt.onerror = () => {
+                console.error(`[AlbumArt Debug] ONERROR for: ${albumArt.src}`);
+                if (albumArt.src !== defaultArtSrc) {
+                    console.log(`[AlbumArt Debug] Falling back to default: ${defaultArtSrc}`);
+                    albumArt.src = defaultArtSrc;
+                } else {
+                    console.error(`[AlbumArt Debug] DEFAULT image also failed!`);
+                    albumArt.alt = "Image Load Error";
+                }
+                albumArt.onerror = null; albumArt.onload = null;
+            };
+            albumArt.onload = () => {
+                console.log(`[AlbumArt Debug] ONLOAD for: ${albumArt.src}`);
+                albumArt.onerror = null; albumArt.onload = null;
+            };
+        } else {
+            console.log(`[AlbumArt Debug] SRC is the same. No change.`);
+        }
+        // Всегда обновляем alt
+        albumArt.alt = plan.track_title || "Album Art";
+
+    } else {
+        // Эта ошибка теперь не должна появляться
+        console.error("[AlbumArt Debug] *** Element img.album-art NOT FOUND! Check HTML structure and selector in applyPlan. ***");
+    }
+    // --- *** КОНЕЦ ОБНОВЛЕНИЯ ОБЛОЖКИ *** ---
+
+    // Сброс UI прогресса
+    if (progress) progress.style.width = "0%";
+    if (currentTimeEl) currentTimeEl.textContent = "0:00";
+    if (totalTimeEl) totalTimeEl.textContent = "0:00";
+
+    // Привязка одноразовых обработчиков аудио
+    const metadataHandler = () => handleMetadataLoad(wasPlaying, plan.song_url);
+    const errorHandler = (e) => handleAudioError(e);
+    audioPlayer.removeEventListener("loadedmetadata", handleMetadataLoad); // Удаляем внешнюю ссылку
+    audioPlayer.removeEventListener("error", handleAudioError); // Удаляем внешнюю ссылку
+    audioPlayer.addEventListener("loadedmetadata", metadataHandler, { once: true });
+    audioPlayer.addEventListener("error", errorHandler, { once: true });
+
+    // Обновить иконку
+    updatePlayPauseIconState();
 }
 const handleMetadataLoad = (shouldResume, songUrl) => { /* ... (Keep implementation from previous version) ... */ const totalTimeEl = document.getElementById("total-time"); const audioPlayer = document.getElementById("audio-player"); console.log("Metadata loaded."); if (totalTimeEl && audioPlayer?.duration && !isNaN(audioPlayer.duration)) { console.log(`Duration: ${audioPlayer.duration}`); totalTimeEl.textContent = formatTime(audioPlayer.duration); } else if (totalTimeEl) { totalTimeEl.textContent = "0:00"; } if (shouldResume && songUrl && audioPlayer?.paused) { console.log("Attempting to resume playback..."); audioPlayer.play().catch(e => console.error("Audio play failed after metadata load:", e)); } else if (audioPlayer && !audioPlayer.paused) { console.log("Audio already playing or should not resume."); updatePlayPauseIconState(); } else { console.log("Not resuming playback."); updatePlayPauseIconState(); } };
 const handleAudioError = (e) => { /* ... (Keep implementation from previous version) ... */ console.error("Audio Player Error:", e.target.error?.message || 'Unknown error', e); const totalTimeEl = document.getElementById("total-time"); const progress = document.getElementById("progress"); const currentTimeEl = document.getElementById("current-time"); if (totalTimeEl) totalTimeEl.textContent = "Error"; if (progress) progress.style.width = "0%"; if (currentTimeEl) currentTimeEl.textContent = "0:00"; updatePlayPauseIconState(); };
