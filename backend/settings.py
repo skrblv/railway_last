@@ -39,6 +39,7 @@ ALLOWED_HOSTS = [
     # Add localhost for local development
     "localhost",
     "127.0.0.1",
+    "https://railwaylast-production.up.railway.app/admin/login/?next=/admin/",
     # Railway might inject its domain via an env var, you could use that too:
     # os.environ.get('RAILWAY_PUBLIC_DOMAIN', 'localhost') # Example if Railway provides it
 ]
