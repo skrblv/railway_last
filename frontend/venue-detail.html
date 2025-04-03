@@ -12,24 +12,19 @@
     <link rel="stylesheet" href="https://unpkg.com/leaflet-routing-machine@3.2.12/dist/leaflet-routing-machine.css" />
     <link rel="stylesheet" href="https://unpkg.com/leaflet-control-geocoder/dist/Control.Geocoder.css" />
 
-    <!-- Link the main CSS file -->
     <link rel="stylesheet" href="{% static 'venue-detail.css' %}">
 
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Quicksand:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <!-- Include Montserrat if needed for Plan B -->
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700&display=swap" rel="stylesheet">
 
 </head>
-<!-- CORRECTED data-venue-id attribute -->
 <body data-venue-id="{{ venue_id }}">
 
-<!-- CORRECTED Inline style block using {% static %} properly -->
 <style>
   body.theme-plan-b-green {
-      /* Assumes bg.png is in frontend/assets/ */
       background-image: url("{% static 'assets/bg.png' %}");
       background-size: cover;
       background-position: center;
@@ -39,7 +34,6 @@
       background-color: var(--dv-b-fallback-color);
   }
 
-  /* Define CSS variables for images needing static paths here */
   :root {
       /* Assumes these images are in frontend/assets/ */
       --svg-sticker-girl-phone: url("{% static 'assets/sticker-girl-phone.png' %}");
@@ -52,7 +46,6 @@
 
 <div class="page-wrapper">
 
-    <!-- Stickers will now use CSS variables set above or data URIs -->
     <div class="sticker sticker-music-notes-top"></div>
     <div class="sticker sticker-girl-phone"></div>
     <div class="sticker sticker-face-small"></div>
@@ -83,10 +76,8 @@
 <script src="https://unpkg.com/leaflet-routing-machine@3.2.12/dist/leaflet-routing-machine.js"></script>
 
 
-<!-- Sticky Music Player HTML Structure -->
 <div class="sticky-music-player">
     <audio id="audio-player" preload="metadata"></audio>
-    <!-- CORRECTED initial src using {% static %} and a real placeholder -->
     <img id="sticky-album-art" src="{% static 'assets/placeholder-album.png' %}" alt="Album Art" class="sticky-album-art">
     <div class="sticky-track-info">
         <span id="sticky-track-title" class="sticky-track-title">No Song</span>
@@ -107,7 +98,6 @@
     </div>
 </div>
 
-<!-- Your JavaScript file -->
 <script src="{% static 'venue-detail.js' %}" defer></script>
 </body>
 </html>
