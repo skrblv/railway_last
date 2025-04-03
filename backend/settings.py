@@ -12,39 +12,78 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/5.1/ref/settings/
 """
 
+import os
 from pathlib import Path
-import os  # Import os module for environment variables
+import dj_database_url # Для конфигурации БД на Railway
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
+
 # --- SECURITY SETTINGS ---
 
 # SECURITY WARNING: keep the secret key used in production secret!
-# It's highly recommended to load this from an environment variable in production.
-# Set the DJANGO_SECRET_KEY environment variable in your Railway service settings.
+# Загружается из переменной окружения DJANGO_SECRET_KEY (установите в Railway)
 SECRET_KEY = os.environ.get(
     'DJANGO_SECRET_KEY',
-    'django-insecure-0hqqy#)-qvcs1w!$d04o=494@z$gssu0($ow%3c0+g!%q4^k$@' # Default for local dev ONLY
+    # НЕ ИСПОЛЬЗУЙТЕ этот ключ в production! Только для локальной разработки.
+    'django-insecure-fallback-key-for-local-dev-only-@#($*@#)sf'
 )
 
 # SECURITY WARNING: don't run with debug turned on in production!
-# Set DJANGO_DEBUG=False environment variable in Railway for production.
-# Defaults to True if the environment variable is not set or not 'False'.
-DEBUG = os.environ.get('DJANGO_DEBUG', '') != 'False'
+# Установите DJANGO_DEBUG=False в переменных окружения Railway для production.
+# По умолчанию True, если переменная не установлена или не равна 'False'.
+DEBUG = os.environ.get('DJANGO_DEBUG', 'True') != 'False'
 
+
+# --- HOSTS & CORS ---
+
+# Домены, с которых разрешено обслуживать сайт
 ALLOWED_HOSTS = [
-    # Add your Railway app's domain name here (e.g., 'your-app-name.up.railway.app')
+    # Домен вашего приложения на Railway (замените, если отличается)
     "railwaylast-production.up.railway.app",
-    # Add localhost for local development
+    # Домены для локальной разработки
     "localhost",
     "127.0.0.1",
-    "https://railwaylast-production.up.railway.app/admin/login/?next=/admin/",
-    # Railway might inject its domain via an env var, you could use that too:
-    # os.environ.get('RAILWAY_PUBLIC_DOMAIN', 'localhost') # Example if Railway provides it
+    # Railway может предоставлять временные домены или использовать внутренние прокси,
+    # иногда требуется '*' в DEBUG режиме, но будьте осторожны с этим в production.
+    # Если DEBUG=False, '*' использовать НЕЛЬЗЯ.
+]
+# Если DEBUG=True, можно временно добавить '*' для простоты локальной настройки,
+# но УБЕРИТЕ это для production:
+# if DEBUG:
+#     ALLOWED_HOSTS.append('*')
+
+
+# Настройки CORS (Cross-Origin Resource Sharing)
+# Определяет, какие внешние домены (например, ваш фронтенд на Vercel или Netlify)
+# могут делать запросы к вашему API.
+
+# Вариант 1: Разрешить все источники (НЕ рекомендуется для production)
+# CORS_ALLOW_ALL_ORIGINS = True
+
+# Вариант 2: Указать конкретные разрешенные источники (Рекомендуется)
+CORS_ALLOW_ALL_ORIGINS = False
+CORS_ALLOWED_ORIGINS = [
+    "https://railwaylast-production.up.railway.app", # Ваш основной домен
+    "http://localhost:8000",   # Django dev server
+    "http://127.0.0.1:8000",  # Django dev server
+    "http://localhost:5500",   # VS Code Live Server (порт может отличаться)
+    "http://127.0.0.1:5500",  # VS Code Live Server (порт может отличаться)
+    "null", # Иногда нужно для локальных file:// запросов
 ]
 
-# Application definition
+# Если фронтенд будет отправлять cookies или заголовки авторизации:
+# CORS_ALLOW_CREDENTIALS = True
+
+# Доверенные источники для CSRF защиты (важно, если frontend на другом домене)
+CSRF_TRUSTED_ORIGINS = [
+    "https://railwaylast-production.up.railway.app",
+    # Добавьте другие доверенные домены, если необходимо
+]
+
+
+# --- Application definition ---
 
 INSTALLED_APPS = [
     'django.contrib.admin',
@@ -52,25 +91,21 @@ INSTALLED_APPS = [
     'django.contrib.contenttypes',
     'django.contrib.sessions',
     'django.contrib.messages',
-    # --- Whitenoise ---
-    # Add 'whitenoise.runserver_nostatic' *before* 'django.contrib.staticfiles'
-    # This makes the development server behave more like production for static files.
+    # --- Whitenoise (должен быть ВЫШЕ staticfiles) ---
     'whitenoise.runserver_nostatic',
     'django.contrib.staticfiles',
     # --- Third-party apps ---
     'rest_framework',
     'corsheaders',
     # --- Your apps ---
-    'api', # Your API app (or rename as needed)
+    'api', # Ваше приложение API
 ]
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
-    # --- Whitenoise Middleware ---
-    # Place Whitenoise middleware *right after* SecurityMiddleware
+    # --- Whitenoise Middleware (сразу после SecurityMiddleware) ---
     'whitenoise.middleware.WhiteNoiseMiddleware',
     # --- CORS Middleware ---
-    # Place CorsMiddleware fairly high, but after security/whitenoise
     'corsheaders.middleware.CorsMiddleware',
     # --- Standard Django Middleware ---
     'django.contrib.sessions.middleware.SessionMiddleware',
@@ -81,49 +116,50 @@ MIDDLEWARE = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
 
-ROOT_URLCONF = 'backend.urls' # Points to your main urls.py file
+ROOT_URLCONF = 'backend.urls' # Указывает на backend/urls.py
 
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        # Tell Django where to find your HTML templates (index.html)
-        'DIRS': [BASE_DIR / "frontend"],
-        'APP_DIRS': True, # Allows Django to find templates inside installed apps
+        # --- Указываем Django, где искать HTML-шаблоны (даже если их отдает WhiteNoise) ---
+        # Это нужно, чтобы тег {% static %} корректно работал внутри HTML.
+        'DIRS': [BASE_DIR / 'frontend'],
+        'APP_DIRS': True, # Искать шаблоны внутри папок 'templates' приложений
         'OPTIONS': {
             'context_processors': [
                 'django.template.context_processors.debug',
                 'django.template.context_processors.request',
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
-                # Add 'static' context processor if you use {% static %} template tag
+                # --- Добавляем обработчик для тега {% static %} ---
                 'django.template.context_processors.static',
             ],
         },
     },
 ]
 
-WSGI_APPLICATION = 'backend.wsgi.application' # Points to your wsgi.py file
+WSGI_APPLICATION = 'backend.wsgi.application' # Точка входа для WSGI серверов (Gunicorn)
+
 
 # --- Database ---
 # https://docs.djangoproject.com/en/5.1/ref/settings/#databases
-# Default SQLite setup.
-# For Railway production, you'll likely want to configure PostgreSQL
-# using environment variables for credentials provided by Railway.
+
+# Конфигурация по умолчанию (SQLite)
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.sqlite3',
         'NAME': BASE_DIR / 'db.sqlite3',
     }
-    # Example PostgreSQL configuration using environment variables (adapt as needed):
-    # 'default': {
-    #     'ENGINE': 'django.db.backends.postgresql',
-    #     'NAME': os.environ.get('PGDATABASE'),
-    #     'USER': os.environ.get('PGUSER'),
-    #     'PASSWORD': os.environ.get('PGPASSWORD'),
-    #     'HOST': os.environ.get('PGHOST'),
-    #     'PORT': os.environ.get('PGPORT', '5432'), # Default port if not set
-    # }
 }
+
+# Конфигурация для Railway PostgreSQL (если переменная DATABASE_URL задана)
+# Railway автоматически предоставляет эту переменную окружения при подключении БД.
+if 'DATABASE_URL' in os.environ:
+    DATABASES['default'] = dj_database_url.config(
+        conn_max_age=600, # Время жизни соединения (опционально)
+        ssl_require=False # Railway обычно обрабатывает SSL сам, но может потребоваться True
+                          # Проверьте документацию Railway или настройки вашей БД
+    )
 
 
 # --- Password validation ---
@@ -138,81 +174,35 @@ AUTH_PASSWORD_VALIDATORS = [
 
 # --- Internationalization ---
 # https://docs.djangoproject.com/en/5.1/topics/i18n/
-LANGUAGE_CODE = 'en-us'
+LANGUAGE_CODE = 'en-us' # Или 'ru-ru', если нужно
 TIME_ZONE = 'UTC'
 USE_I18N = True
-USE_TZ = True # Recommended to keep True for time zone handling
+USE_TZ = True # Рекомендуется оставить True
 
 
 # --- Static files (CSS, JavaScript, Images) ---
 # https://docs.djangoproject.com/en/5.1/howto/static-files/
 # https://whitenoise.readthedocs.io/
 
-# URL to use when referring to static files located in STATIC_ROOT.
-# Example: {% static 'css/style.css' %} -> '/static/css/style.css'
-STATIC_URL = '/static/'
+STATIC_URL = '/static/' # URL-префикс для статических файлов
 
-# Directories where Django will look for static files *in addition* to each app's 'static/' directory.
-# Put your global static files (like base CSS, JS, images used in templates) here.
-# Your 'style.css', 'script.js', and 'assets' folder should be directly inside 'frontend'.
+# Папки, ОТКУДА `collectstatic` будет брать ваши статические файлы (JS, CSS, HTML, assets)
 STATICFILES_DIRS = [
-    BASE_DIR / 'frontend',
+    BASE_DIR / 'frontend', # Указываем на вашу папку с фронтендом
 ]
 
-# The absolute path to the directory where `collectstatic` will collect static files for deployment.
-# **DO NOT** put anything in this directory yourself; Django/Whitenoise manage it.
-# Whitenoise serves files from this directory in production.
+# Папка, КУДА `collectstatic` соберет ВСЕ статические файлы для production.
+# Whitenoise будет отдавать файлы из этой папки.
 STATIC_ROOT = BASE_DIR / 'staticfiles'
 
-# --- Whitenoise Storage Backend (Recommended) ---
-# Use Whitenoise's storage backend for compression and efficient caching (via Manifest).
-# This replaces the older STATICFILES_STORAGE setting in Django 4.2+.
+# Хранилище для WhiteNoise (включает сжатие и вечное кэширование через манифест)
 STORAGES = {
     "staticfiles": {
         "BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage",
     },
 }
-# If using Django < 4.2, use this instead of STORAGES:
+# Для Django < 4.2 используйте эту настройку вместо STORAGES:
 # STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
-
-# --- Media Files (User Uploads) ---
-# These settings are for files uploaded by users through your application.
-# Since your 'assets' seem to be part of the site design (images, audio),
-# they should be treated as STATIC files (handled above).
-# If you *do* have user uploads, you'll typically configure cloud storage (like S3)
-# for production instead of serving them directly from the filesystem.
-# MEDIA_URL = '/media/' # URL prefix for media files
-# MEDIA_ROOT = BASE_DIR / 'mediafiles' # Directory to store uploaded files *locally* (not recommended for production)
-
-
-# --- CORS (Cross-Origin Resource Sharing) Settings ---
-# https://github.com/adamchainz/django-cors-headers
-
-# Option 1: Allow all origins (simple for development, less secure for production)
-# CORS_ALLOW_ALL_ORIGINS = True
-
-# Option 2: Specify allowed origins (Recommended for production)
-CORS_ALLOW_ALL_ORIGINS = False # Set to False when using CORS_ALLOWED_ORIGINS
-CORS_ALLOWED_ORIGINS = [
-    "https://railwaylast-production.up.railway.app", # Your frontend production domain
-    "http://localhost:8000",   # Django dev server
-    "http://127.0.0.1:8000",  # Django dev server
-    "http://localhost:5500",   # VS Code Live Server (if used)
-    "http://127.0.0.1:5500",  # VS Code Live Server (if used)
-    # Add any other frontend origins you need to allow
-    # "null" # Sometimes needed for specific local setups or file:// origins
-]
-
-# Optional: If you use Credentials (like cookies or auth headers) with CORS requests
-# CORS_ALLOW_CREDENTIALS = True
-
-# Optional: CSRF Protection Trusted Origins (May be needed for POST requests from different subdomains/ports)
-# Especially important if your frontend and backend are on different domains/subdomains in prod.
-CSRF_TRUSTED_ORIGINS = [
-    "https://railwaylast-production.up.railway.app",
-    "http://localhost:5500",
-    "http://127.0.0.1:5500",
-]
 
 
 # --- Default primary key field type ---
