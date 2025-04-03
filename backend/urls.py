@@ -13,6 +13,9 @@ urlpatterns = [
     # Frontend Pages
     path('', TemplateView.as_view(template_name='index.html'), name='home'), # Main page
 
+    path('venue-detail.html', views.venue_detail_html, name='venue-detail'), 
+
+
     # +++ ADD THIS URL PATTERN +++
     # Matches URLs like /venue/1/, /venue/15/, etc.
     # Calls the venue_detail_view function from api/views.py
