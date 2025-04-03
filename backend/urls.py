@@ -17,7 +17,7 @@ urlpatterns = [
     # Matches URLs like /venue/1/, /venue/15/, etc.
     # Calls the venue_detail_view function from api/views.py
     # The <int:pk> captures the number after /venue/ and passes it as 'pk' to the view
-    path('venue/<int:pk>/', api_views.venue_detail_view, name='venue-detail'),
+    # path('venue/<int:pk>/', api_views.venue_detail_view, name='venue-detail'),
     # ++++++++++++++++++++++++++++
 
 ]
