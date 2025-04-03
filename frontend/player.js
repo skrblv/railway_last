@@ -16,7 +16,7 @@ const DOT_WIDTH = 8; // px
 const DOT_MARGIN = 4; // px
 const MAP_ZOOM_LEVEL = 15;
 const API_BASE_URL = "/api";
-const VENUE_DETAIL_BASE_PATH = './venue-detail.html'; // Relative path for local serving
+const VENUE_DETAIL_BASE_PATH = '/venue/'; // Relative path for local serving
 
 // --- Paths relative to index.html ---
 const FIXED_SONG_PATH = './assets/Fifty Fifty - Cupid (Twin Version).mp3'; // Your fixed song
