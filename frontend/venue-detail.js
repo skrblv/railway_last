@@ -15,7 +15,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const playerElement = document.querySelector('.sticky-music-player');
 
     // --- Constants & Config ---
-    const API_BASE_URL = 'http://127.0.0.1:8000/api';
+    const API_BASE_URL = '/api';
     const ROUTING_STORAGE_KEY = 'venueRouteWaypoints_v2'; // Keep separate storage for detail page routing
     const PLACEHOLDER_ALBUM_ART = 'assets/placeholder-album.png';
     const PLACEHOLDER_BUILDING_IMG = 'img/placeholder-building.jpg';
