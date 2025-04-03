@@ -12,33 +12,47 @@
     <link rel="stylesheet" href="https://unpkg.com/leaflet-routing-machine@3.2.12/dist/leaflet-routing-machine.css" />
     <link rel="stylesheet" href="https://unpkg.com/leaflet-control-geocoder/dist/Control.Geocoder.css" />
 
+    <!-- Link the main CSS file -->
     <link rel="stylesheet" href="{% static 'venue-detail.css' %}">
-    <!-- <link rel="stylesheet" href="style.css"> -->
 
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Quicksand:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Include Montserrat if needed for Plan B -->
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700&display=swap" rel="stylesheet">
 
 </head>
-<body data-venue-id="{{ venue_id }}>
+<!-- CORRECTED data-venue-id attribute -->
+<body data-venue-id="{{ venue_id }}">
+
+<!-- CORRECTED Inline style block using {% static %} properly -->
 <style>
-  .background {
+  body.theme-plan-b-green {
+      /* Assumes bg.png is in frontend/assets/ */
       background-image: url("{% static 'assets/bg.png' %}");
+      background-size: cover;
+      background-position: center;
+      background-repeat: no-repeat;
+      background-attachment: fixed;
+      /* Fallback color from variables is still good */
+      background-color: var(--dv-b-fallback-color);
   }
-  .sticker-girl-phone {
-      background-image: url("{% static 'assets/sticker-girl-phone.png' %}");
+
+  /* Define CSS variables for images needing static paths here */
+  :root {
+      /* Assumes these images are in frontend/assets/ */
+      --svg-sticker-girl-phone: url("{% static 'assets/sticker-girl-phone.png' %}");
+      --svg-sticker-bunny-boombox-top: url("{% static 'assets/bunny.png' %}");
+       /* Add other SVG stickers defined via {% static %} here if they were problematic */
+       /* Example: --svg-sticker-music-notes-top: url("{% static 'assets/sticker-music-notes.svg' %}"); */
+       /* Note: Data URI SVGs in the original CSS don't need {% static %} */
   }
-    body.theme-plan-b-green {
-        font-family: var(--font-plan-b) !important;
-        background: url("{% static 'assets/bg.png' %}") center/cover no-repeat fixed, var(--dv-b-fallback-color);
-        color: var(--dv-b-text-color);
-    }
 </style>
 
 <div class="page-wrapper">
 
-    <!-- Декоративные стикеры (внешние) -->
+    <!-- Stickers will now use CSS variables set above or data URIs -->
     <div class="sticker sticker-music-notes-top"></div>
     <div class="sticker sticker-girl-phone"></div>
     <div class="sticker sticker-face-small"></div>
@@ -48,69 +62,52 @@
     <div class="sticker sticker-flip-phone-pink"></div>
     <div class="sticker sticker-swirl"></div>
     <div class="sticker sticker-flip-phone-green"></div>
-    <!-- Внутренние стикеры остаются, позиция будет скорректирована CSS -->
     <div class="sticker sticker-boombox-bottom"></div>
 
-    <!-- Заголовок страницы -->
     <div class="page-header">
         <h1 id="venue-name-header">Heartland</h1>
     </div>
 
-    <!-- ===== Placeholder for Plan Switcher Buttons ===== -->
     <div id="plan-switcher-placeholder" class="plan-switcher-container-detail"></div>
-    <!-- =============================================== -->
 
-    <!-- Основной контейнер контента -->
     <div class="venue-container" id="venue-detail-content">
-        <!-- Начальное состояние загрузки -->
         <div class="loading">Загрузка деталей места...</div>
+    </div>
 
-    </div> 
+</div>
 
-</div> <!-- Конец page-wrapper -->
-
-
-<!-- Leaflet JS -->
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
  integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
  crossorigin=""></script>
-<!-- Leaflet Control Geocoder JS -->
 <script src="https://unpkg.com/leaflet-control-geocoder/dist/Control.Geocoder.js"></script>
-<!-- Leaflet Routing Machine JS -->
 <script src="https://unpkg.com/leaflet-routing-machine@3.2.12/dist/leaflet-routing-machine.js"></script>
 
 
-<!-- ===== Sticky Music Player HTML Structure ===== -->
+<!-- Sticky Music Player HTML Structure -->
 <div class="sticky-music-player">
-    <audio id="audio-player" preload="metadata"></audio> <!-- Нет начального src -->
-    <img id="sticky-album-art" src="assets/bg.png" alt="Album Art" class="sticky-album-art"> <!-- Placeholder -->
+    <audio id="audio-player" preload="metadata"></audio>
+    <!-- CORRECTED initial src using {% static %} and a real placeholder -->
+    <img id="sticky-album-art" src="{% static 'assets/placeholder-album.png' %}" alt="Album Art" class="sticky-album-art">
     <div class="sticky-track-info">
         <span id="sticky-track-title" class="sticky-track-title">No Song</span>
         <span id="sticky-artist-name" class="sticky-artist-name">Unknown Artist</span>
     </div>
-    <!-- Прогресс бар можно добавить, но в примере его нет, добавляем кнопки -->
     <div class="sticky-controls">
-        <!-- Кнопка Connect/Device (Примерная иконка) -->
         <button class="sticky-control-btn btn-device" aria-label="Connect to a device">
             <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 0 24 24" width="24px" fill="currentColor"><path d="M0 0h24v24H0V0z" fill="none"/><path d="M4 6H2v14c0 1.1.9 2 2 2h14v-2H4V6zm16-4H8c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm0 14H8V4h12v12zM12 5.5v9l6-4.5z"/></svg>
         </button>
-        <!-- Кнопка Add (Примерная иконка) -->
         <button class="sticky-control-btn btn-add" aria-label="Add to library">
             <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 0 24 24" width="24px" fill="currentColor"><path d="M0 0h24v24H0V0z" fill="none"/><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/></svg>
         </button>
-        <!-- Кнопка Play/Pause -->
         <button id="sticky-play-pause-btn" class="sticky-control-btn btn-play-pause" aria-label="Play">
             <span id="sticky-play-pause-icon">
-                 <!-- Иконка Play -->
                 <svg xmlns="http://www.w3.org/2000/svg" height="28px" viewBox="0 0 24 24" width="28px" fill="currentColor"><path d="M0 0h24v24H0V0z" fill="none"/><path d="M8 5v14l11-7L8 5z"/></svg>
              </span>
         </button>
     </div>
 </div>
-<!-- =========================================== -->
 
-
-<!-- Ваш JavaScript файл -->
+<!-- Your JavaScript file -->
 <script src="{% static 'venue-detail.js' %}" defer></script>
 </body>
 </html>
