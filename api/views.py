@@ -1,12 +1,12 @@
 # api/views.py
-from rest_framework import viewsets
-from .models import Venue # Only import Venue
-from .serializers import VenueSerializer # Only import VenueSerializer
+from django.shortcuts import get_object_or_404
+from django.http import JsonResponse
+from .models import Venue
+from .serializers import VenueSerializer
 
-class VenueViewSet(viewsets.ReadOnlyModelViewSet): # Provides list and detail views (GET)
-    queryset = Venue.objects.all() # Get all Venue objects from the database
-    serializer_class = VenueSerializer
-
-# --- Remove the old PlanViewSet ---
-# class PlanViewSet(viewsets.ReadOnlyModelViewSet):
-#     ... (delete this entire viewset) ...
+def venue_detail_view(request, pk):
+    # Используем get_object_or_404, чтобы получить объект по pk или вернуть 404, если объект не найден
+    venue = get_object_or_404(Venue, pk=pk)
+    # Сериализуем объект для возвращения в виде JSON
+    serializer = VenueSerializer(venue)
+    return JsonResponse(serializer.data)
