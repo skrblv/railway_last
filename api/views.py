@@ -1,12 +1,10 @@
 # api/views.py
-from django.shortcuts import get_object_or_404
-from django.http import JsonResponse
+from rest_framework import viewsets # Убедитесь, что это импортировано
 from .models import Venue
 from .serializers import VenueSerializer
+# УДАЛИТЕ импорты для venue_detail_view, если они были
 
-def venue_detail_view(request, pk):
-    # Используем get_object_or_404, чтобы получить объект по pk или вернуть 404, если объект не найден
-    venue = get_object_or_404(Venue, pk=pk)
-    # Сериализуем объект для возвращения в виде JSON
-    serializer = VenueSerializer(venue)
-    return JsonResponse(serializer.data)
+class VenueViewSet(viewsets.ReadOnlyModelViewSet): # ИСПОЛЬЗУЕТСЯ РОУТЕРОМ
+    queryset = Venue.objects.all()
+    serializer_class = VenueSerializer
+
