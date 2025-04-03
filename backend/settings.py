@@ -208,11 +208,11 @@ CORS_ALLOWED_ORIGINS = [
 
 # Optional: CSRF Protection Trusted Origins (May be needed for POST requests from different subdomains/ports)
 # Especially important if your frontend and backend are on different domains/subdomains in prod.
-# CSRF_TRUSTED_ORIGINS = [
-#     "https://railwaylast-production.up.railway.app",
-#     "http://localhost:5500",
-#     "http://127.0.0.1:5500",
-# ]
+CSRF_TRUSTED_ORIGINS = [
+    "https://railwaylast-production.up.railway.app",
+    "http://localhost:5500",
+    "http://127.0.0.1:5500",
+]
 
 
 # --- Default primary key field type ---
