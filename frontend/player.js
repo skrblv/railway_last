@@ -1,25 +1,26 @@
+// frontend/player.js
 
 // --- Data Storage ---
 let fetchedVenueData = []; // Will be filled by API call
-let fetchedPlanData = []; // Will be filled by API call (RE-ADDED for themes)
 let currentVenueIndex = 0; // Track the currently displayed venue in the swiper
-let currentPlan = null; // Track the currently active plan (RE-ADDED for themes)
 
 // --- Constants ---
 const DOT_WIDTH = 8; // px
 const DOT_MARGIN = 4; // px
 const MAP_ZOOM_LEVEL = 15;
-const API_BASE_URL = "/api"; // !!! ADAPT THIS: Your backend API base URL
+const API_BASE_URL = "/api"; // Adapt if needed
 
 // !!! CRITICAL CONFIGURATION: Set this to match your backend URL pattern !!!
-// Ensure it ends with a slash if your backend expects it for detail views.
 const VENUE_DETAIL_BASE_PATH = '/venue/'; // <<<--- CHECK AND CHANGE THIS PATH IF NEEDED
 
-// --- Paths relative to index.html ---
-// !!! VERIFY THESE PATHS ARE CORRECT RELATIVE TO YOUR index.html !!!
-const FIXED_SONG_PATH = './assets/Fifty Fifty - Cupid (Twin Version).mp3'; // Your fixed song path
-const PLACEHOLDER_VENUE_IMAGE = './assets/placeholder-building.jpg'; // Fallback image for venues
-// !!! ------------------------------------------------------------- !!!
+// --- Paths relative to index.html (Placeholders - check if needed elsewhere) ---
+// Use Django static paths managed by the template tag in index.html
+const PLACEHOLDER_VENUE_IMAGE = '/static/assets/placeholder-building.jpg';
+const PLACEHOLDER_ALBUM_ART = '/static/assets/placeholder-album.png';
+
+// Theme Class Constants for index.html
+const THEME_POSITIVE_CLASS = 'theme-positive'; // Matches style.css body.theme-positive
+const THEME_SAD_CLASS = 'theme-sad';       // Matches style.css body.theme-sad
 
 // --- Leaflet Map Variables ---
 let venueMapInstance = null;
@@ -33,9 +34,9 @@ let currentX = 0;
 let diffX = 0;
 let cardWidth = 0;
 let touchStartTime = 0;
-const TAP_THRESHOLD_X = 15; // Max horizontal pixels moved to still be considered a tap
-const TAP_THRESHOLD_Y = 20; // Max vertical pixels moved to still be considered a tap
-const MAX_TAP_DURATION = 350; // Max milliseconds for a tap
+const TAP_THRESHOLD_X = 15;
+const TAP_THRESHOLD_Y = 20;
+const MAX_TAP_DURATION = 350;
 
 // =========================================================================
 // == Helper Functions (Format Time, Update Icon, Navigation) ==============
@@ -105,9 +106,8 @@ function navigateToVenueDetail(venueId) {
     }
 }
 
-
 // =========================================================================
-// == API Fetching Functions
+// == API Fetching Functions (Venues Only) =================================
 // =========================================================================
 
 /**
@@ -149,94 +149,43 @@ async function fetchVenues() {
     }
 }
 
-/**
- * Fetches plan data from the backend API (used for themes).
- * Updates `fetchedPlanData`.
- * Applies the initial theme based on fetched plans.
- */
-async function fetchPlans() {
-    console.log("Attempting to fetch plans (for themes)...");
-    try {
-        const response = await fetch(`${API_BASE_URL}/plans/`);
-        if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status} ${response.statusText}`);
-        }
-        const contentType = response.headers.get("content-type");
-        if (contentType && contentType.includes("application/json")) {
-            fetchedPlanData = await response.json();
-            console.log("Fetched Plans (for themes):", fetchedPlanData);
-            if (!Array.isArray(fetchedPlanData)) {
-                console.warn("Fetched plan data is not an array, resetting.", fetchedPlanData);
-                fetchedPlanData = [];
-            }
-            // Set initial theme based on Plan A or the first plan found
-            if (fetchedPlanData.length > 0) {
-                // Look for 'Plan A' case-insensitively, otherwise take the first plan
-                const initialPlan = fetchedPlanData.find((p) => p.name?.toLowerCase() === "plan a") || fetchedPlanData[0];
-                console.log("Initial theme plan set to:", initialPlan?.name || 'First Plan');
-                applyTheme(initialPlan); // Apply the theme from the selected plan
-            } else {
-                console.log("No plans fetched, applying default theme.");
-                applyTheme(null); // Apply default theme state (no specific class)
-            }
-        } else {
-            const textResponse = await response.text();
-            throw new Error(`Expected JSON, but received ${contentType}. Response: ${textResponse}`);
-        }
-    } catch (error) {
-        console.error("Could not fetch plans:", error);
-        fetchedPlanData = []; // Reset data on error
-        applyTheme(null); // Apply default theme state on error
-    }
-}
-
 // =========================================================================
-// == Theme Application Function (NO AUDIO LOGIC) ==========================
+// == VISUAL Theme Application Function (NO AUDIO LOGIC) ===================
 // =========================================================================
 
 /**
  * Applies the visual theme by adding/removing CSS classes on the body element.
- * Does NOT interact with the audio player.
- * @param {object | null} plan - The plan object containing the theme property, or null for default.
+ * Does NOT interact with the audio player. Accepts 'positive' or 'sad'.
+ * @param {string} themeName - The name of the theme ('positive' or 'sad').
  */
-function applyTheme(plan) {
+function applyTheme(themeName) {
     const body = document.body;
     if (!body) {
         console.error("Cannot apply theme: document.body not found.");
         return;
     }
 
-    // If no plan is provided, reset to default theme state
-    if (!plan) {
-        console.log("Applying default theme state (removing specific theme classes).");
-        currentPlan = null;
-        body.classList.remove("theme-positive", "theme-sad");
-        // Optionally add a default theme class if your CSS requires it:
-        // body.classList.add("theme-default");
-        return;
-    }
+    console.log(`Applying visual theme: ${themeName}`);
 
-    console.log("Applying Theme from Plan:", plan.name || `(ID: ${plan.id})`);
-    currentPlan = plan; // Keep track of the plan object for reference
+    // Remove existing theme classes first
+    body.classList.remove(THEME_POSITIVE_CLASS, THEME_SAD_CLASS);
 
-    // Remove existing theme classes first to ensure only one is active
-    body.classList.remove("theme-positive", "theme-sad"); // Add any other theme classes here if needed
-
-    // Add the new theme class based on the plan's 'theme' property
-    if (plan.theme === "positive") {
-        console.log("   -> Setting theme: positive");
-        body.classList.add("theme-positive");
-    } else if (plan.theme === "sad") {
-        console.log("   -> Setting theme: sad");
-        body.classList.add("theme-sad");
+    // Add the new theme class based on the name
+    if (themeName === 'positive') {
+        // For index.html, positive theme might just be the absence of theme-sad
+        // Or add the specific class if your style.css requires it
+        body.classList.add(THEME_POSITIVE_CLASS); // Use the class defined in style.css
+    } else if (themeName === 'sad') {
+        body.classList.add(THEME_SAD_CLASS); // Use the class defined in style.css
     } else {
-        console.warn(`   -> Plan '${plan.name}' has unknown or missing theme property:`, plan.theme, " - Applying default styling (no theme class).");
-        // No class added, relies on base CSS styles
+        console.warn(`Unknown theme name: '${themeName}'. Applying default (using .theme-positive).`);
+        // Apply default theme (e.g., positive)
+         body.classList.add(THEME_POSITIVE_CLASS);
     }
 
     // NO AUDIO PLAYER LOGIC HERE.
+    console.log("Body classes after theme update:", body.className);
 }
-
 
 // =========================================================================
 // == FIXED Music Player Initialization & Controls =========================
@@ -244,7 +193,7 @@ function applyTheme(plan) {
 
 /**
  * Initializes the music player to play the fixed song and sets up its controls.
- * Runs independently of fetched plan/venue data.
+ * Gets the correct static path from the data attribute.
  */
 function initializeFixedPlayer() {
     console.log("Initializing Fixed Music Player...");
@@ -264,12 +213,21 @@ function initializeFixedPlayer() {
         return;
     }
 
+    // --- Get the correct static audio source from data attribute ---
+    const fixedSongUrl = audioPlayer.dataset.staticSrc; // Read from data-static-src
+    if (!fixedSongUrl) {
+        console.error("Fixed player init failed: Missing 'data-static-src' attribute on audio element. Make sure the {% static %} tag rendered correctly.");
+        if (totalTimeEl) totalTimeEl.textContent = "Error";
+        return; // Stop initialization if source URL is missing
+    }
+
+
     // --- Set the fixed audio source ---
-    // Use URL constructor for a reliable comparison, handling relative paths
-    const fixedSongUrl = new URL(FIXED_SONG_PATH, window.location.href).href;
-    if (audioPlayer.src !== fixedSongUrl) {
-        console.log("Setting fixed audio source:", FIXED_SONG_PATH);
-        audioPlayer.src = FIXED_SONG_PATH;
+    // Use URL constructor for a reliable comparison, in case Django returns a full URL
+    const absoluteFixedUrl = new URL(fixedSongUrl, window.location.href).href;
+    if (audioPlayer.src !== absoluteFixedUrl) {
+        console.log("Setting fixed audio source from data attribute:", fixedSongUrl);
+        audioPlayer.src = fixedSongUrl; // Set src to the value from data attribute
         // Metadata (title, artist, album art) should be set directly in the HTML
     } else {
         console.log("Fixed audio source already set:", audioPlayer.src);
@@ -301,7 +259,7 @@ function initializeFixedPlayer() {
                 default: errorMsg = 'An unknown error occurred.'; break;
             }
         }
-        console.error(`Fixed Audio Player Error: ${errorMsg}`, e); // Log specific error
+        console.error(`Fixed Audio Player Error: ${errorMsg}. Source: ${audioPlayer.src}`, e); // Log specific error
         if (totalTimeEl) totalTimeEl.textContent = "Error";
         if (progress) progress.style.width = "0%";
         if (currentTimeEl) currentTimeEl.textContent = "0:00";
@@ -313,33 +271,44 @@ function initializeFixedPlayer() {
     function togglePlayPause() {
         // Verify source is set before attempting to play
         if (!audioPlayer.src || audioPlayer.src === window.location.href) { // Check if src is empty or points to the page itself
-            console.warn("Cannot play/pause: Fixed audio source not set or invalid.");
-            // Attempt to set it again as a recovery measure
-            const currentFixedUrl = new URL(FIXED_SONG_PATH, window.location.href).href;
-            if(audioPlayer.src !== currentFixedUrl) {
-                audioPlayer.src = FIXED_SONG_PATH;
+            console.warn("Cannot play/pause: Fixed audio source not set or invalid.", audioPlayer.src);
+            // Attempt to recover using data attribute if needed
+            const correctSrc = audioPlayer.dataset.staticSrc;
+            if (correctSrc && audioPlayer.src !== correctSrc) {
+                console.log("Attempting to reload fixed audio source from data attribute.");
+                audioPlayer.src = correctSrc;
                 audioPlayer.load(); // Trigger loading
-                console.log("Attempting to reload fixed audio source.");
             }
             return;
         }
 
         if (audioPlayer.paused) {
+            console.log("Attempting to play...");
             // Check readyState before playing
             if (audioPlayer.readyState >= 2) { // HAVE_CURRENT_DATA or more
-                 audioPlayer.play().catch(e => {
-                    console.error("Audio play failed:", e);
-                    updatePlayPauseIconState(); // Update icon on immediate failure
-                });
+                 const playPromise = audioPlayer.play();
+                 if (playPromise !== undefined) {
+                     playPromise.catch(e => {
+                        console.error("Audio play failed:", e);
+                        // Common issue: User hasn't interacted with the page yet.
+                        if (e.name === 'NotAllowedError') {
+                            console.warn("Autoplay was prevented. User interaction is required to start audio.");
+                            // Optionally display a message to the user
+                        }
+                        updatePlayPauseIconState(); // Update icon on immediate failure
+                     });
+                 }
+                 // Icon state will be updated by the 'play' event listener on success
             } else {
-                console.log("Audio not ready to play yet, attempting load...");
+                console.log("Audio not ready to play yet (readyState:", audioPlayer.readyState,"), attempting load...");
                 audioPlayer.load(); // Try loading again
                 // Optionally, try playing once loadedmetadata fires again
             }
         } else {
+            console.log("Attempting to pause...");
             audioPlayer.pause();
+            // Icon state will be updated by the 'pause' event listener
         }
-        // Icon state will be updated automatically by the 'play' and 'pause' event listeners attached below
     }
 
     function updateProgress() {
@@ -424,140 +393,97 @@ function initializeFixedPlayer() {
     console.log("Fixed Music Player Controls Initialized.");
 }
 
-
 // =========================================================================
-// == DOMContentLoaded Event Listener (Main Execution Block)
+// == DOMContentLoaded Event Listener (Main Execution Block) ================
 // =========================================================================
 document.addEventListener("DOMContentLoaded", async () => {
     console.log("DOM loaded. Starting initialization...");
 
     // 1. Initialize the *fixed* music player immediately
-    // It doesn't depend on fetched data.
     initializeFixedPlayer();
 
-    // 2. Fetch venue and plan data concurrently
-    console.log("Fetching initial venue and plan data...");
+    // 2. Fetch ONLY venue data
+    console.log("Fetching initial venue data...");
     try {
-        // Wait for both asynchronous operations to complete
-        await Promise.all([
-            fetchVenues(), // Fetches venue data
-            fetchPlans()   // Fetches plan data and applies initial theme
-        ]);
-        console.log("Initial data fetching complete (venues and plans).");
-        // Note: The initial theme is applied within fetchPlans if successful.
+        await fetchVenues();
+        console.log("Initial venue data fetching complete.");
     } catch (error) {
-        console.error("Error during initial data fetch (Promise.all caught):", error);
-        // Individual fetch functions should have already shown UI errors.
-        // Ensure default theme is applied if fetchPlans failed within the Promise.all context
-        if (fetchedPlanData.length === 0 && !document.body.classList.contains('theme-positive') && !document.body.classList.contains('theme-sad')) {
-            applyTheme(null);
-        }
+        console.error("Error during initial venue data fetch:", error);
+        // UI errors handled within fetchVenues
     }
 
-    // 3. Setup swiper and map *after* venue data is fetched
-    // These depend on `fetchedVenueData`.
-    setupSwiperInteractions();
-    setupLeafletMap();
+    // 3. Setup swiper and map *after* venue data is fetched (if successful)
+    if (fetchedVenueData.length > 0) {
+        setupSwiperInteractions();
+        setupLeafletMap();
+    } else {
+        console.warn("Skipping swiper and map setup due to lack of venue data.");
+    }
 
     // 4. Setup other UI elements (Checklist, Countdown)
-    // These are generally independent of fetched data.
     setupChecklist();
     setupCountdownTimer();
 
-    // 5. Setup Plan Switcher Buttons *after* plan data is fetched
-    // This depends on `fetchedPlanData`.
-    setupPlanSwitcherButtons();
+    // 5. Setup VISUAL Theme Switcher Buttons (no data dependency needed now)
+    setupThemeSwitcherButtons();
+
+    // 6. Apply a default theme visually on load (e.g., positive)
+    applyTheme('positive'); // Or 'sad' if you prefer that default
 
     console.log("Frontend Player Initialization Complete.");
 }); // --- END DOMContentLoaded ---
 
-
 // =========================================================================
-// == Plan Switcher Button Setup Function =================================
+// == VISUAL Theme Switcher Button Setup Function ==========================
 // =========================================================================
 
 /**
- * Creates and inserts theme switcher buttons into the DOM based on fetched plan data.
- * Recommended: Add <div id="plan-switcher-placeholder"></div> in your HTML where you want buttons.
+ * Creates and inserts HARDCODED theme switcher buttons into the DOM.
+ * These buttons ONLY call applyTheme to change CSS classes.
  */
-function setupPlanSwitcherButtons() {
-    console.log("Initializing Plan Switcher Buttons (for themes)...");
+function setupThemeSwitcherButtons() {
+    console.log("Initializing VISUAL Theme Switcher Buttons...");
 
-    // Find a suitable container for the buttons
-    // BEST: Use a dedicated placeholder div
     const planSwitcherPlaceholder = document.getElementById('plan-switcher-placeholder');
-    let insertionPoint = null;
-    let referenceNode = null; // For insertBefore
 
-    // Determine where to insert the buttons
-    if (planSwitcherPlaceholder) {
-        insertionPoint = planSwitcherPlaceholder; // Target the placeholder
-        planSwitcherPlaceholder.innerHTML = ''; // Clear any placeholder content
-        planSwitcherPlaceholder.style.display = 'block'; // Ensure it's visible if hidden initially
-        console.log("Found placeholder (#plan-switcher-placeholder) for theme buttons.");
-    } else {
-        console.warn("Optional: Add <div id='plan-switcher-placeholder'></div> to your HTML for button placement.");
-        // Fallback: Try inserting before the features section
-        const featuresSection = document.querySelector(".features");
-        if (featuresSection?.parentNode) {
-            insertionPoint = featuresSection.parentNode;
-            referenceNode = featuresSection; // Insert before this node
-            console.log("Fallback: Inserting plan switcher before features section.");
-        } else {
-             // Further Fallback: Append to the main container or body
-             const mainContainer = document.querySelector(".container");
-             if (mainContainer) {
-                insertionPoint = mainContainer;
-                console.warn("Fallback: Features section not found, appending plan switcher to main container.");
-             } else {
-                insertionPoint = document.body;
-                console.warn("Fallback: Features section and main container not found, appending plan switcher to body.");
-             }
-        }
+    if (!planSwitcherPlaceholder) {
+        console.error("Could not find #plan-switcher-placeholder div in HTML to insert theme buttons.");
+        return;
     }
 
-    // Only create buttons if plan data exists AND an insertion point was found
-    if (fetchedPlanData.length > 0 && insertionPoint) {
-        console.log(`Creating ${fetchedPlanData.length} theme switcher buttons.`);
-        const planSwitcherContainer = document.createElement("div");
-        planSwitcherContainer.className = "plan-switcher-container";
-        planSwitcherContainer.style.textAlign = "center";
-        planSwitcherContainer.style.padding = "20px 0";
-        planSwitcherContainer.style.marginBottom = "30px"; // Add some space below
+    planSwitcherPlaceholder.innerHTML = ''; // Clear placeholder content
+    planSwitcherPlaceholder.style.display = 'block'; // Ensure it's visible
 
-        fetchedPlanData.forEach((plan) => {
-            const button = document.createElement("button");
-            // Make button text descriptive
-            button.textContent = `Set Theme: ${plan.name || `Plan ID ${plan.id}`} (${plan.theme || 'default'})`;
-            button.className = "btn btn-secondary btn-switch-plan"; // Use existing styles
-            button.style.margin = "5px 8px"; // Add vertical margin for wrapping
-            button.setAttribute("data-plan-id", plan.id);
-            // IMPORTANT: Clicking the button calls applyTheme
-            button.onclick = () => applyTheme(plan);
-            planSwitcherContainer.appendChild(button);
-        });
+    console.log("Creating hardcoded theme switcher buttons.");
+    const planSwitcherContainer = document.createElement("div");
+    planSwitcherContainer.className = "plan-switcher-container"; // Optional class for styling container
 
-        // Insert the container with buttons into the determined location
-        if (referenceNode) { // Use insertBefore if a reference node was found
-            insertionPoint.insertBefore(planSwitcherContainer, referenceNode);
-        } else { // Otherwise, append to the insertion point (placeholder, container, or body)
-            insertionPoint.appendChild(planSwitcherContainer);
-        }
+    // --- Create Positive Theme Button ---
+    const positiveButton = document.createElement("button");
+    positiveButton.textContent = `Positive Theme`; // Button text
+    // Use existing button styles - adjust if needed
+    positiveButton.className = "btn btn-secondary btn-switch-theme";
+    positiveButton.style.margin = "5px 8px"; // Add some spacing
+    // IMPORTANT: Calls applyTheme with 'positive'
+    positiveButton.onclick = () => applyTheme('positive');
+    planSwitcherContainer.appendChild(positiveButton);
 
-    } else if (fetchedPlanData.length === 0) {
-        console.log("No plan data fetched, skipping plan/theme switcher buttons.");
-        if (planSwitcherPlaceholder) {
-            planSwitcherPlaceholder.style.display = 'none'; // Hide placeholder if no buttons needed
-        }
-    } else {
-        // This case means plan data exists, but no insertion point was found (should be rare with fallbacks)
-        console.error("Could not find a suitable place in the DOM to insert plan switcher buttons.");
-    }
+    // --- Create Sad Theme Button ---
+    const sadButton = document.createElement("button");
+    sadButton.textContent = `Sad Theme`; // Button text
+    sadButton.className = "btn btn-secondary btn-switch-theme";
+    sadButton.style.margin = "5px 8px"; // Add some spacing
+    // IMPORTANT: Calls applyTheme with 'sad'
+    sadButton.onclick = () => applyTheme('sad');
+    planSwitcherContainer.appendChild(sadButton);
+
+    // Append the container with buttons to the placeholder
+    planSwitcherPlaceholder.appendChild(planSwitcherContainer);
+    console.log("Theme switcher buttons added.");
 }
 
-
 // =========================================================================
-// == Countdown Timer Logic (Copied from Deployed Version) =================
+// == Countdown Timer Logic (Copied from Previous Version) =================
 // =========================================================================
 function setupCountdownTimer() {
     console.log("Initializing Countdown Timer...");
@@ -692,7 +618,7 @@ function setupCountdownTimer() {
 }
 
 // =========================================================================
-// == Leaflet Map Initialization (Copied from Deployed Version) ============
+// == Leaflet Map Initialization (Copied from Previous Version) ============
 // =========================================================================
 function setupLeafletMap() {
     console.log("Initializing Leaflet Map...");
@@ -726,9 +652,6 @@ function setupLeafletMap() {
             // Add zoom control to a different position
             L.control.zoom({ position: "bottomright" }).addTo(venueMapInstance);
 
-            // Add attribution control if required by tile provider terms
-            // L.control.attribution({ position: 'bottomleft', prefix: false }).addTo(venueMapInstance);
-
             // Add tile layer (OpenStreetMap)
             L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
                 attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
@@ -746,7 +669,6 @@ function setupLeafletMap() {
             }
 
             // Invalidate map size after a short delay to ensure correct rendering
-            // Especially important if map container size changes after initial load
             setTimeout(() => {
                 if (venueMapInstance) {
                     console.log("Invalidating map size.");
@@ -806,14 +728,14 @@ function setupSwiperInteractions() {
 
     console.log("Swiper inner wrappers and dots containers found.");
 
-    // --- Swiper Helper Functions --- (generateDots, updateDots, updateVenueMap, setupCardWidth - unchanged)
+    // --- Swiper Helper Functions ---
 
-    function setupCardWidth() { cardWidth = venueCard.offsetWidth || 220; /* console.log(`Swiper card width set to: ${cardWidth}px`); */ }
-    function generateDots() { /* console.log(`Generating ${fetchedVenueData.length} dots.`); */ allDotsInnerContainers.forEach((di) => { if (di) { di.innerHTML = ""; fetchedVenueData.forEach(() => di.appendChild(document.createElement("span"))); } else { console.warn("A .dots-inner container is missing."); } }); }
+    function setupCardWidth() { cardWidth = venueCard.offsetWidth || 220; }
+    function generateDots() { allDotsInnerContainers.forEach((di) => { if (di) { di.innerHTML = ""; fetchedVenueData.forEach(() => di.appendChild(document.createElement("span"))); } else { console.warn("A .dots-inner container is missing."); } }); }
     function updateDots(activeIndex) { if (activeIndex < 0 || activeIndex >= fetchedVenueData.length) return; allDotsInnerContainers.forEach((di) => { if (!di) return; const dots = di.querySelectorAll("span"); const dc = di.parentElement; if (!dc || !dots.length || dots.length !== fetchedVenueData.length) return; dots.forEach((d, i) => d.classList.toggle("active", i === activeIndex)); const dw = (DOT_WIDTH + DOT_MARGIN * 2), cw = dc.offsetWidth, tw = dots.length * dw, aco = activeIndex * dw + dw / 2; let tx = 0; if (tw > cw) { tx = cw / 2 - aco; const maxT = 0, minT = cw - tw; tx = Math.max(minT, Math.min(maxT, tx)); } else { tx = (cw - tw) / 2; } di.style.transform = `translateX(${tx}px)`; }); }
     function updateVenueMap(lat, lng, venueName) { if (!venueMapInstance || !venueMarker) return; if (typeof lat === "number" && typeof lng === "number") { const ll = L.latLng(lat, lng); try { venueMapInstance.setView(ll, MAP_ZOOM_LEVEL, { animate: true, pan: { duration: 0.5 } }); venueMarker.setLatLng(ll); if (venueName) venueMarker.setPopupContent(`<b>${venueName}</b>`); else venueMarker.setPopupContent(''); setTimeout(() => venueMapInstance?.invalidateSize(), 150); } catch (mapError) { console.error("Error updating map view/marker:", mapError); } } else { console.warn(`Map update skipped for "${venueName || 'Unknown'}": Invalid coords (lat: ${lat}, lng: ${lng}).`); } }
 
-    // --- Display Venue Function --- (unchanged from previous version)
+    // --- Display Venue Function ---
     function displayVenue(index) {
         if (index < 0 || index >= fetchedVenueData.length) { console.warn(`Invalid venue index requested: ${index}`); return; }
         const venueData = fetchedVenueData[index];
@@ -830,6 +752,7 @@ function setupSwiperInteractions() {
         if (venueNameEl) venueNameEl.textContent = venueData.name || "Venue Name";
         if (venueDateEl) venueDateEl.textContent = venueData.date_text || "--";
 
+        // Use static path for placeholder
         venueCard.style.backgroundImage = `url('${PLACEHOLDER_VENUE_IMAGE}')`;
         venueCard.style.backgroundColor = 'var(--secondary-color)';
         venueCard.style.backgroundSize = 'cover';
@@ -837,7 +760,7 @@ function setupSwiperInteractions() {
         if (venueData.image_url) {
             const imgTest = new Image();
             imgTest.onload = () => { venueCard.style.backgroundImage = `url('${venueData.image_url}')`; };
-            imgTest.onerror = () => { console.warn(`Venue card BG failed to load: ${venueData.image_url}. Using placeholder/fallback color.`); };
+            imgTest.onerror = () => { console.warn(`Venue card BG failed to load: ${venueData.image_url}. Using placeholder.`); };
             imgTest.src = venueData.image_url;
         }
 
@@ -849,31 +772,26 @@ function setupSwiperInteractions() {
         if (chooseHeaderEl) chooseHeaderEl.textContent = venueData.rating_text || "Venue Details";
         if (ratingEl) { const rVal = Math.round(venueData.rating_stars || 0); const maxStars = 5; ratingEl.innerHTML = '<span class="filled">' + '★'.repeat(rVal) + '</span>' + '☆'.repeat(maxStars - rVal); }
         if (ratingTextEl) { ratingTextEl.textContent = venueData.rating_text || ''; }
-        if (iconsContainer) { let iconsHTML = ''; if (venueData.venue_icon1) iconsHTML += `<span class="venue-icon-1">${venueData.venue_icon1}</span>`; if (venueData.venue_icon2) iconsHTML += ` <span class="venue-icon-2">${venueData.venue_icon2}</span>`; iconsContainer.innerHTML = iconsHTML || ' '; }
+        if (iconsContainer) { let iconsHTML = ''; if (venueData.venue_icon1) iconsHTML += `<span class="venue-icon-1">${venueData.venue_icon1}</span>`; if (venueData.venue_icon2) iconsHTML += ` <span class="venue-icon-2">${venueData.venue_icon2}</span>`; iconsContainer.innerHTML = iconsHTML || ' '; }
 
         updateVenueMap(venueData.latitude, venueData.longitude, venueData.name);
         updateDots(index);
     }
 
-
     // --- Event Handlers (Defined ONCE) ---
-
-    const handlePointerStart = (e) => { // Unchanged
-        if (e.target.closest("button, input, a, .dots, .leaflet-control, .leaflet-marker-icon, .leaflet-popup")) { console.log("Pointer start ignored on interactive element."); isDragging = false; startX = null; return; }
+    const handlePointerStart = (e) => {
+        if (e.target.closest("button, input, a, .dots, .leaflet-control, .leaflet-marker-icon, .leaflet-popup")) { isDragging = false; startX = null; return; }
         isDragging = false; startX = e.type.includes("mouse") ? e.clientX : e.touches[0].clientX; startY = e.type.includes("mouse") ? e.clientY : e.touches[0].clientY; currentX = startX; diffX = 0; touchStartTime = Date.now(); cardWidth = venueCard.offsetWidth;
         venueWrapper.classList.add("is-swiping"); chooseWrapper.classList.add("is-swiping");
     };
-
-    const handlePointerMove = (e) => { // Unchanged
+    const handlePointerMove = (e) => {
         if (startX === null) return;
         currentX = e.type.includes("mouse") ? e.clientX : e.touches[0].clientX;
         const currentY = e.type.includes("mouse") ? e.clientY : e.touches[0].clientY;
         diffX = currentX - startX; const diffY = currentY - startY;
-        if (!isDragging) { if (Math.abs(diffY) > TAP_THRESHOLD_Y && Math.abs(diffY) > Math.abs(diffX) * 1.5) { console.log("Vertical scroll detected, canceling swipe."); startX = null; venueWrapper.classList.remove("is-swiping"); chooseWrapper.classList.remove("is-swiping"); return; } if (Math.abs(diffX) > TAP_THRESHOLD_X) { console.log("Dragging started."); isDragging = true; } }
+        if (!isDragging) { if (Math.abs(diffY) > TAP_THRESHOLD_Y && Math.abs(diffY) > Math.abs(diffX) * 1.5) { startX = null; venueWrapper.classList.remove("is-swiping"); chooseWrapper.classList.remove("is-swiping"); return; } if (Math.abs(diffX) > TAP_THRESHOLD_X) { isDragging = true; } }
         if (isDragging) { const tV = `translateX(${diffX}px)`; venueWrapper.style.transform = tV; chooseWrapper.style.transform = tV; if (e.cancelable && e.type.includes("touch")) e.preventDefault(); }
     };
-
-    // Touchend / Mouseup / etc. Handler - WITH TypeError FIX
     const handlePointerEnd = (e) => {
         if (startX === null) return; // Interaction was cancelled or ignored
 
@@ -888,16 +806,12 @@ function setupSwiperInteractions() {
                       Math.abs(finalDiffX) < TAP_THRESHOLD_X &&
                       Math.abs(finalDiffY) < TAP_THRESHOLD_Y;
 
-        // console.log(`Pointer end. Drag: ${isDragging}, Dur: ${touchDuration}ms, dx: ${finalDiffX.toFixed(0)}, dy: ${finalDiffY.toFixed(0)}, Tap: ${isTap}`); // Verbose Log
-
         // --- Handle Tap ---
         if (isTap) {
-            // *** FIX: Check if the event's currentTarget is actually one of the cards ***
-            // This prevents the error when the mouseup/touchend happens on the document
             const targetCard = e.currentTarget;
             if (targetCard === venueCard || targetCard === chooseVenueCard) {
                 console.log("[Tap] Tap detected on card:", targetCard.id);
-                const venueId = targetCard.getAttribute('data-venue-id'); // Now safe to call
+                const venueId = targetCard.getAttribute('data-venue-id');
                 console.log("[Tap] Extracted Venue ID from tapped card:", venueId);
                 if (venueId) {
                     navigateToVenueDetail(venueId); // <<< NAVIGATION CALL ON TAP
@@ -937,7 +851,6 @@ function setupSwiperInteractions() {
         }
         // --- Handle Aborted Drag / Other ---
         else {
-             // console.log("Pointer end: Not a swipe, not a tap. Snapping back."); // Verbose Log
              venueWrapper.style.transition = "transform 0.3s ease-out";
              chooseWrapper.style.transition = "transform 0.3s ease-out";
              venueWrapper.style.transform = `translateX(0px)`;
@@ -950,7 +863,6 @@ function setupSwiperInteractions() {
         venueWrapper.classList.remove("is-swiping"); chooseWrapper.classList.remove("is-swiping");
     };
 
-
     // --- Attach Event Listeners ONCE ---
     console.log("Attaching pointer/mouse/touch listeners ONCE to swiper cards.");
     [venueCard, chooseVenueCard].forEach(card => {
@@ -959,7 +871,7 @@ function setupSwiperInteractions() {
         card.addEventListener("touchend", handlePointerEnd); // Will have card as currentTarget
         card.addEventListener("touchcancel", handlePointerEnd);
         card.addEventListener("mousedown", handlePointerStart);
-        card.addEventListener('click', (e) => { // Click fallback (unchanged)
+        card.addEventListener('click', (e) => { // Click fallback
             if (!isDragging && Math.abs(diffX) < TAP_THRESHOLD_X) { if (!e.target.closest("button, input, a, .dots, .leaflet-control, .leaflet-marker-icon, .leaflet-popup")) { console.log("[Click Fallback] Click detected on card area."); const targetCard = e.currentTarget; const venueId = targetCard.getAttribute('data-venue-id'); console.log("[Click Fallback] Extracted Venue ID:", venueId); if (venueId) navigateToVenueDetail(venueId); else console.warn("[Click Fallback] Could not navigate via click: data-venue-id missing."); } else { console.log("[Click Fallback] Click ignored (on inner interactive element)."); } } else { console.log("[Click Fallback] Click ignored (likely after swipe)."); }
         });
     });
@@ -974,14 +886,14 @@ function setupSwiperInteractions() {
     generateDots();
     displayVenue(currentVenueIndex);
 
-    // --- Resize Handler --- (unchanged)
+    // --- Resize Handler ---
     window.addEventListener("resize", () => { console.log("Window resized."); setupCardWidth(); updateDots(currentVenueIndex); if (venueMapInstance) { setTimeout(() => { if (venueMapInstance) venueMapInstance.invalidateSize(); }, 150); } });
 
 } // --- End of setupSwiperInteractions ---
 
 
 // =========================================================================
-// == Checklist Logic (Copied from Deployed Version) =======================
+// == Checklist Logic (Copied from Previous Version) =======================
 // =========================================================================
 function setupChecklist() {
     console.log("Initializing Checklist...");
@@ -1000,4 +912,3 @@ function setupChecklist() {
         console.warn("No checklist items found (selector: .interactive-checklist input[type='checkbox']).");
     }
 }
-
