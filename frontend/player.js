@@ -1,17 +1,25 @@
 
+// --- Data Storage ---
 let fetchedVenueData = []; // Will be filled by API call
 let fetchedPlanData = []; // Will be filled by API call (RE-ADDED for themes)
 let currentVenueIndex = 0; // Track the currently displayed venue in the swiper
 let currentPlan = null; // Track the currently active plan (RE-ADDED for themes)
 
+// --- Constants ---
 const DOT_WIDTH = 8; // px
 const DOT_MARGIN = 4; // px
 const MAP_ZOOM_LEVEL = 15;
-const API_BASE_URL = "/api"; 
-const VENUE_DETAIL_BASE_PATH = '/venue/'; 
+const API_BASE_URL = "/api"; // !!! ADAPT THIS: Your backend API base URL
 
+// !!! CRITICAL CONFIGURATION: Set this to match your backend URL pattern !!!
+// Ensure it ends with a slash if your backend expects it for detail views.
+const VENUE_DETAIL_BASE_PATH = '/venue/'; // <<<--- CHECK AND CHANGE THIS PATH IF NEEDED
+
+// --- Paths relative to index.html ---
+// !!! VERIFY THESE PATHS ARE CORRECT RELATIVE TO YOUR index.html !!!
 const FIXED_SONG_PATH = './assets/Fifty Fifty - Cupid (Twin Version).mp3'; // Your fixed song path
 const PLACEHOLDER_VENUE_IMAGE = './assets/placeholder-building.jpg'; // Fallback image for venues
+// !!! ------------------------------------------------------------- !!!
 
 // --- Leaflet Map Variables ---
 let venueMapInstance = null;
@@ -29,6 +37,15 @@ const TAP_THRESHOLD_X = 15; // Max horizontal pixels moved to still be considere
 const TAP_THRESHOLD_Y = 20; // Max vertical pixels moved to still be considered a tap
 const MAX_TAP_DURATION = 350; // Max milliseconds for a tap
 
+// =========================================================================
+// == Helper Functions (Format Time, Update Icon, Navigation) ==============
+// =========================================================================
+
+/**
+ * Formats time in seconds to a mm:ss string.
+ * @param {number} seconds - Time in seconds.
+ * @returns {string} Formatted time string.
+ */
 function formatTime(seconds) {
     if (isNaN(seconds) || seconds < 0) seconds = 0;
     const minutes = Math.floor(seconds / 60);
@@ -36,6 +53,9 @@ function formatTime(seconds) {
     return `${minutes}:${secs < 10 ? "0" : ""}${secs}`;
 }
 
+/**
+ * Updates the play/pause button icon based on the audio player's state.
+ */
 function updatePlayPauseIconState() {
     const audioPlayer = document.getElementById("audio-player");
     const playPauseIcon = document.getElementById("play-pause-icon");
@@ -55,6 +75,11 @@ function updatePlayPauseIconState() {
     }
 }
 
+/**
+ * Navigates the browser to the detail page for the given venue ID.
+ * Ensures the base path ends with a slash.
+ * @param {string | number | null | undefined} venueId - The ID of the venue.
+ */
 function navigateToVenueDetail(venueId) {
     console.log("[Nav] navigateToVenueDetail called with ID:", venueId);
     if (venueId === null || venueId === undefined || venueId === '') {
@@ -62,6 +87,7 @@ function navigateToVenueDetail(venueId) {
         return;
     }
 
+    // --- Ensure trailing slash consistency ---
     let basePath = VENUE_DETAIL_BASE_PATH;
     if (!basePath.endsWith('/')) {
         basePath += '/';
@@ -80,6 +106,16 @@ function navigateToVenueDetail(venueId) {
 }
 
 
+// =========================================================================
+// == API Fetching Functions
+// =========================================================================
+
+/**
+ * Fetches venue data from the backend API.
+ * Updates `fetchedVenueData`.
+ * Handles potential pagination in the response.
+ * Shows error messages in the UI on failure.
+ */
 async function fetchVenues() {
     console.log("Attempting to fetch venues...");
     try {
@@ -113,6 +149,11 @@ async function fetchVenues() {
     }
 }
 
+/**
+ * Fetches plan data from the backend API (used for themes).
+ * Updates `fetchedPlanData`.
+ * Applies the initial theme based on fetched plans.
+ */
 async function fetchPlans() {
     console.log("Attempting to fetch plans (for themes)...");
     try {
@@ -128,6 +169,7 @@ async function fetchPlans() {
                 console.warn("Fetched plan data is not an array, resetting.", fetchedPlanData);
                 fetchedPlanData = [];
             }
+            // Set initial theme based on Plan A or the first plan found
             if (fetchedPlanData.length > 0) {
                 // Look for 'Plan A' case-insensitively, otherwise take the first plan
                 const initialPlan = fetchedPlanData.find((p) => p.name?.toLowerCase() === "plan a") || fetchedPlanData[0];
@@ -148,6 +190,15 @@ async function fetchPlans() {
     }
 }
 
+// =========================================================================
+// == Theme Application Function (NO AUDIO LOGIC) ==========================
+// =========================================================================
+
+/**
+ * Applies the visual theme by adding/removing CSS classes on the body element.
+ * Does NOT interact with the audio player.
+ * @param {object | null} plan - The plan object containing the theme property, or null for default.
+ */
 function applyTheme(plan) {
     const body = document.body;
     if (!body) {
@@ -168,8 +219,10 @@ function applyTheme(plan) {
     console.log("Applying Theme from Plan:", plan.name || `(ID: ${plan.id})`);
     currentPlan = plan; // Keep track of the plan object for reference
 
+    // Remove existing theme classes first to ensure only one is active
     body.classList.remove("theme-positive", "theme-sad"); // Add any other theme classes here if needed
 
+    // Add the new theme class based on the plan's 'theme' property
     if (plan.theme === "positive") {
         console.log("   -> Setting theme: positive");
         body.classList.add("theme-positive");
@@ -178,11 +231,21 @@ function applyTheme(plan) {
         body.classList.add("theme-sad");
     } else {
         console.warn(`   -> Plan '${plan.name}' has unknown or missing theme property:`, plan.theme, " - Applying default styling (no theme class).");
+        // No class added, relies on base CSS styles
     }
 
+    // NO AUDIO PLAYER LOGIC HERE.
 }
 
 
+// =========================================================================
+// == FIXED Music Player Initialization & Controls =========================
+// =========================================================================
+
+/**
+ * Initializes the music player to play the fixed song and sets up its controls.
+ * Runs independently of fetched plan/venue data.
+ */
 function initializeFixedPlayer() {
     console.log("Initializing Fixed Music Player...");
     const audioPlayer = document.getElementById("audio-player");
@@ -208,10 +271,6 @@ function initializeFixedPlayer() {
         console.log("Setting fixed audio source:", FIXED_SONG_PATH);
         audioPlayer.src = FIXED_SONG_PATH;
         // Metadata (title, artist, album art) should be set directly in the HTML
-        // for the fixed player setup. Example:
-        // <img class="album-art" src="./assets/hq720 (1).jpg" alt="Album Art">
-        // <div id="track-title">Cupid (Twin Ver.)</div>
-        // <div id="artist-name">FIFTY FIFTY</div>
     } else {
         console.log("Fixed audio source already set:", audioPlayer.src);
     }
@@ -231,7 +290,18 @@ function initializeFixedPlayer() {
 
     // Handle audio loading errors
     audioPlayer.addEventListener("error", (e) => {
-        console.error("Fixed Audio Player Error:", e.target.error?.message || 'Unknown error', e);
+        // Log a more informative error message
+        let errorMsg = 'Unknown error';
+        if (e.target && e.target.error) {
+            switch (e.target.error.code) {
+                case e.target.error.MEDIA_ERR_ABORTED: errorMsg = 'Fetch aborted by user.'; break;
+                case e.target.error.MEDIA_ERR_NETWORK: errorMsg = 'Network error occurred.'; break;
+                case e.target.error.MEDIA_ERR_DECODE: errorMsg = 'Decoding error occurred.'; break;
+                case e.target.error.MEDIA_ERR_SRC_NOT_SUPPORTED: errorMsg = 'Audio source not supported (check path/format/server).'; break;
+                default: errorMsg = 'An unknown error occurred.'; break;
+            }
+        }
+        console.error(`Fixed Audio Player Error: ${errorMsg}`, e); // Log specific error
         if (totalTimeEl) totalTimeEl.textContent = "Error";
         if (progress) progress.style.width = "0%";
         if (currentTimeEl) currentTimeEl.textContent = "0:00";
@@ -255,11 +325,17 @@ function initializeFixedPlayer() {
         }
 
         if (audioPlayer.paused) {
-            audioPlayer.play().catch(e => {
-                console.error("Audio play failed:", e);
-                // Update icon state in case play() promise rejects immediately
-                updatePlayPauseIconState();
-            });
+            // Check readyState before playing
+            if (audioPlayer.readyState >= 2) { // HAVE_CURRENT_DATA or more
+                 audioPlayer.play().catch(e => {
+                    console.error("Audio play failed:", e);
+                    updatePlayPauseIconState(); // Update icon on immediate failure
+                });
+            } else {
+                console.log("Audio not ready to play yet, attempting load...");
+                audioPlayer.load(); // Try loading again
+                // Optionally, try playing once loadedmetadata fires again
+            }
         } else {
             audioPlayer.pause();
         }
@@ -296,8 +372,13 @@ function initializeFixedPlayer() {
 
         // Calculate seek position as a ratio (0 to 1)
         const seekRatio = Math.max(0, Math.min(1, offsetX / barWidth));
-        audioPlayer.currentTime = seekRatio * audioPlayer.duration;
-        updateProgress(); // Update display immediately after seeking
+        // Check if ready to seek
+        if (audioPlayer.seekable.length > 0) {
+             audioPlayer.currentTime = seekRatio * audioPlayer.duration;
+             updateProgress(); // Update display immediately after seeking
+        } else {
+            console.warn("Cannot seek: Audio is not seekable yet.");
+        }
     }
 
     function changeVolume() {
@@ -311,12 +392,17 @@ function initializeFixedPlayer() {
             console.warn("Cannot restart: Audio source or duration invalid.");
             return;
         }
-        audioPlayer.currentTime = 0;
-        if (audioPlayer.paused) {
-            updateProgress(); // Update progress display even when paused
+        // Check if seekable before setting currentTime
+        if (audioPlayer.seekable.length > 0) {
+            audioPlayer.currentTime = 0;
+            if (audioPlayer.paused) {
+                updateProgress(); // Update progress display even when paused
+            } else {
+                // If it was playing, ensure it continues playing after restarting
+                audioPlayer.play().catch(e => console.error("Audio play failed on restart:", e));
+            }
         } else {
-            // If it was playing, ensure it continues playing after restarting
-            audioPlayer.play().catch(e => console.error("Audio play failed on restart:", e));
+             console.warn("Cannot restart: Audio not seekable yet.");
         }
     }
 
@@ -392,41 +478,45 @@ document.addEventListener("DOMContentLoaded", async () => {
 
 /**
  * Creates and inserts theme switcher buttons into the DOM based on fetched plan data.
+ * Recommended: Add <div id="plan-switcher-placeholder"></div> in your HTML where you want buttons.
  */
 function setupPlanSwitcherButtons() {
     console.log("Initializing Plan Switcher Buttons (for themes)...");
 
     // Find a suitable container for the buttons
-    const planSwitcherPlaceholder = document.getElementById('plan-switcher-placeholder'); // Ideal: Use a dedicated placeholder div
+    // BEST: Use a dedicated placeholder div
+    const planSwitcherPlaceholder = document.getElementById('plan-switcher-placeholder');
     let insertionPoint = null;
-    let referenceNode = null;
+    let referenceNode = null; // For insertBefore
 
     // Determine where to insert the buttons
     if (planSwitcherPlaceholder) {
-        insertionPoint = planSwitcherPlaceholder; // Replace content of placeholder
-        planSwitcherPlaceholder.innerHTML = ''; // Clear placeholder content
-        planSwitcherPlaceholder.style.display = 'block'; // Ensure it's visible
+        insertionPoint = planSwitcherPlaceholder; // Target the placeholder
+        planSwitcherPlaceholder.innerHTML = ''; // Clear any placeholder content
+        planSwitcherPlaceholder.style.display = 'block'; // Ensure it's visible if hidden initially
+        console.log("Found placeholder (#plan-switcher-placeholder) for theme buttons.");
     } else {
+        console.warn("Optional: Add <div id='plan-switcher-placeholder'></div> to your HTML for button placement.");
         // Fallback: Try inserting before the features section
         const featuresSection = document.querySelector(".features");
         if (featuresSection?.parentNode) {
             insertionPoint = featuresSection.parentNode;
             referenceNode = featuresSection; // Insert before this node
-            console.log("Inserting plan switcher before features section.");
+            console.log("Fallback: Inserting plan switcher before features section.");
         } else {
              // Further Fallback: Append to the main container or body
              const mainContainer = document.querySelector(".container");
              if (mainContainer) {
                 insertionPoint = mainContainer;
-                console.warn("Features section not found, appending plan switcher to main container.");
+                console.warn("Fallback: Features section not found, appending plan switcher to main container.");
              } else {
                 insertionPoint = document.body;
-                console.warn("Features section and main container not found, appending plan switcher to body.");
+                console.warn("Fallback: Features section and main container not found, appending plan switcher to body.");
              }
         }
     }
 
-    // Only create buttons if plan data exists and an insertion point was found
+    // Only create buttons if plan data exists AND an insertion point was found
     if (fetchedPlanData.length > 0 && insertionPoint) {
         console.log(`Creating ${fetchedPlanData.length} theme switcher buttons.`);
         const planSwitcherContainer = document.createElement("div");
@@ -442,25 +532,26 @@ function setupPlanSwitcherButtons() {
             button.className = "btn btn-secondary btn-switch-plan"; // Use existing styles
             button.style.margin = "5px 8px"; // Add vertical margin for wrapping
             button.setAttribute("data-plan-id", plan.id);
-            // IMPORTANT: Clicking the button calls applyTheme, not applyPlan
+            // IMPORTANT: Clicking the button calls applyTheme
             button.onclick = () => applyTheme(plan);
             planSwitcherContainer.appendChild(button);
         });
 
         // Insert the container with buttons into the determined location
-        if (referenceNode) {
+        if (referenceNode) { // Use insertBefore if a reference node was found
             insertionPoint.insertBefore(planSwitcherContainer, referenceNode);
-        } else {
+        } else { // Otherwise, append to the insertion point (placeholder, container, or body)
             insertionPoint.appendChild(planSwitcherContainer);
         }
 
     } else if (fetchedPlanData.length === 0) {
         console.log("No plan data fetched, skipping plan/theme switcher buttons.");
         if (planSwitcherPlaceholder) {
-            planSwitcherPlaceholder.style.display = 'none'; // Hide placeholder if no buttons
+            planSwitcherPlaceholder.style.display = 'none'; // Hide placeholder if no buttons needed
         }
     } else {
-        console.error("Could not find a suitable place to insert plan switcher buttons.");
+        // This case means plan data exists, but no insertion point was found (should be rare with fallbacks)
+        console.error("Could not find a suitable place in the DOM to insert plan switcher buttons.");
     }
 }
 
@@ -678,7 +769,7 @@ function setupLeafletMap() {
 }
 
 // =========================================================================
-// == Venue Swiper Logic (Setup Function - Copied from Deployed Version) ===
+// == Venue Swiper Logic (Setup Function - Includes TypeError Fix) ========
 // =========================================================================
 function setupSwiperInteractions() {
     console.log("Initializing Venue Swiper...");
@@ -715,294 +806,116 @@ function setupSwiperInteractions() {
 
     console.log("Swiper inner wrappers and dots containers found.");
 
-    // --- Swiper Helper Functions ---
+    // --- Swiper Helper Functions --- (generateDots, updateDots, updateVenueMap, setupCardWidth - unchanged)
 
-    // Calculate and store card width
-    function setupCardWidth() {
-        cardWidth = venueCard.offsetWidth || 220; // Use offsetWidth, provide fallback
-        console.log(`Swiper card width set to: ${cardWidth}px`);
-    }
+    function setupCardWidth() { cardWidth = venueCard.offsetWidth || 220; /* console.log(`Swiper card width set to: ${cardWidth}px`); */ }
+    function generateDots() { /* console.log(`Generating ${fetchedVenueData.length} dots.`); */ allDotsInnerContainers.forEach((di) => { if (di) { di.innerHTML = ""; fetchedVenueData.forEach(() => di.appendChild(document.createElement("span"))); } else { console.warn("A .dots-inner container is missing."); } }); }
+    function updateDots(activeIndex) { if (activeIndex < 0 || activeIndex >= fetchedVenueData.length) return; allDotsInnerContainers.forEach((di) => { if (!di) return; const dots = di.querySelectorAll("span"); const dc = di.parentElement; if (!dc || !dots.length || dots.length !== fetchedVenueData.length) return; dots.forEach((d, i) => d.classList.toggle("active", i === activeIndex)); const dw = (DOT_WIDTH + DOT_MARGIN * 2), cw = dc.offsetWidth, tw = dots.length * dw, aco = activeIndex * dw + dw / 2; let tx = 0; if (tw > cw) { tx = cw / 2 - aco; const maxT = 0, minT = cw - tw; tx = Math.max(minT, Math.min(maxT, tx)); } else { tx = (cw - tw) / 2; } di.style.transform = `translateX(${tx}px)`; }); }
+    function updateVenueMap(lat, lng, venueName) { if (!venueMapInstance || !venueMarker) return; if (typeof lat === "number" && typeof lng === "number") { const ll = L.latLng(lat, lng); try { venueMapInstance.setView(ll, MAP_ZOOM_LEVEL, { animate: true, pan: { duration: 0.5 } }); venueMarker.setLatLng(ll); if (venueName) venueMarker.setPopupContent(`<b>${venueName}</b>`); else venueMarker.setPopupContent(''); setTimeout(() => venueMapInstance?.invalidateSize(), 150); } catch (mapError) { console.error("Error updating map view/marker:", mapError); } } else { console.warn(`Map update skipped for "${venueName || 'Unknown'}": Invalid coords (lat: ${lat}, lng: ${lng}).`); } }
 
-    // Generate dot indicators based on fetched data length
-    function generateDots() {
-        console.log(`Generating ${fetchedVenueData.length} dots.`);
-        allDotsInnerContainers.forEach((dotsInner) => {
-            if (dotsInner) {
-                dotsInner.innerHTML = ""; // Clear existing dots
-                fetchedVenueData.forEach(() => {
-                    dotsInner.appendChild(document.createElement("span"));
-                });
-            } else {
-                console.warn("A .dots-inner container is missing.");
-            }
-        });
-    }
-
-    // Update active dot and scroll dots container
-    function updateDots(activeIndex) {
-        if (activeIndex < 0 || activeIndex >= fetchedVenueData.length) return;
-        // console.log(`Updating dots to active index: ${activeIndex}`); // Can be verbose
-        allDotsInnerContainers.forEach((dotsInner) => {
-            if (!dotsInner) return;
-            const dots = dotsInner.querySelectorAll("span");
-            const dotsContainer = dotsInner.parentElement; // The '.dots' element
-
-            // Basic sanity checks
-            if (!dotsContainer || !dots.length || dots.length !== fetchedVenueData.length) {
-                // console.warn("Dots container/dots mismatch or missing."); // Can be verbose
-                return;
-            }
-
-            // Toggle active class
-            dots.forEach((dot, index) => dot.classList.toggle("active", index === activeIndex));
-
-            // Calculate scroll offset to center the active dot
-            const dotTotalWidth = DOT_WIDTH + DOT_MARGIN * 2;
-            const containerVisibleWidth = dotsContainer.offsetWidth;
-            const totalInnerWidth = fetchedVenueData.length * dotTotalWidth;
-            const activeDotCenterOffset = activeIndex * dotTotalWidth + dotTotalWidth / 2;
-
-            let translateX = 0;
-            if (totalInnerWidth > containerVisibleWidth) {
-                // Calculate ideal translation to center the dot
-                translateX = containerVisibleWidth / 2 - activeDotCenterOffset;
-                // Clamp translation within bounds [minTranslate, maxTranslate]
-                const maxTranslate = 0; // Can't scroll past the beginning
-                const minTranslate = containerVisibleWidth - totalInnerWidth; // Max scroll amount to the left
-                translateX = Math.max(minTranslate, Math.min(maxTranslate, translateX));
-            } else {
-                // If dots fit within container, center the whole block
-                translateX = (containerVisibleWidth - totalInnerWidth) / 2;
-            }
-            dotsInner.style.transform = `translateX(${translateX}px)`;
-        });
-    }
-
-    // Update the Leaflet map position and marker
-    function updateVenueMap(lat, lng, venueName) {
-        if (!venueMapInstance || !venueMarker) {
-            // console.warn("Map update skipped: Map instance or marker missing."); // Can be verbose
-            return;
-        }
-        if (typeof lat === "number" && typeof lng === "number") {
-            const newLatLng = L.latLng(lat, lng);
-            // console.log(`Updating map to [${lat}, ${lng}] for "${venueName}"`); // Can be verbose
-            try {
-                // Smoothly pan and zoom map view
-                venueMapInstance.setView(newLatLng, MAP_ZOOM_LEVEL, {
-                    animate: true,
-                    pan: { duration: 0.5 } // Animation duration
-                });
-                // Update marker position
-                venueMarker.setLatLng(newLatLng);
-                // Update marker popup content
-                if (venueName) {
-                    venueMarker.setPopupContent(`<b>${venueName}</b>`);
-                } else {
-                    venueMarker.setPopupContent(''); // Clear popup if no name
-                }
-                // Invalidate size after animation might start, ensures map redraws correctly
-                setTimeout(() => venueMapInstance?.invalidateSize(), 150);
-            } catch (mapError) {
-                console.error("Error updating map view/marker:", mapError);
-            }
-        } else {
-            console.warn(`Map update skipped for "${venueName || 'Unknown Venue'}": Invalid coords (lat: ${lat}, lng: ${lng}).`);
-        }
-    }
-
-    // --- Display Venue Function (Updates card UI, map, dots - NO player/theme update) ---
+    // --- Display Venue Function --- (unchanged from previous version)
     function displayVenue(index) {
-        if (index < 0 || index >= fetchedVenueData.length) {
-            console.warn(`Invalid venue index requested: ${index}`);
-            return; // Exit if index is out of bounds
-        }
+        if (index < 0 || index >= fetchedVenueData.length) { console.warn(`Invalid venue index requested: ${index}`); return; }
         const venueData = fetchedVenueData[index];
-        if (!venueData) {
-            console.warn(`No venue data found for index: ${index}`);
-            return; // Exit if data for index is missing
-        }
-        const currentVenueId = venueData.id; // Use venueData.id directly
+        if (!venueData) { console.warn(`No venue data found for index: ${index}`); return; }
+        const currentVenueId = venueData.id;
         console.log(`Displaying venue index: ${index}, ID: ${currentVenueId ?? 'N/A'}, Name: ${venueData?.name ?? 'Unknown'}`);
 
-        // Set data-venue-id attribute on both cards for tap navigation
-        // Use nullish coalescing operator (??) to provide an empty string if ID is null/undefined
         venueCard.setAttribute('data-venue-id', currentVenueId ?? '');
         chooseVenueCard.setAttribute('data-venue-id', currentVenueId ?? '');
-        if (!currentVenueId) {
-            console.warn(`   -> Venue ID is missing for index ${index}. Navigation on tap might fail.`);
-        }
+        if (!currentVenueId) { console.warn(`   -> Venue ID is missing for index ${index}. Navigation on tap might fail.`); }
 
-        // --- Update Card Visuals ---
-
-        // Venue Details Card (#venue-details-card)
         const venueNameEl = venueWrapper.querySelector(".venue-name");
         const venueDateEl = venueWrapper.querySelector(".venue-date");
-        if (venueNameEl) venueNameEl.textContent = venueData.name || "Venue Name"; // Fallback text
-        if (venueDateEl) venueDateEl.textContent = venueData.date_text || "--";   // Fallback text
+        if (venueNameEl) venueNameEl.textContent = venueData.name || "Venue Name";
+        if (venueDateEl) venueDateEl.textContent = venueData.date_text || "--";
 
-        // Set background image with placeholder, fallback color, and error handling
-        venueCard.style.backgroundImage = `url('${PLACEHOLDER_VENUE_IMAGE}')`; // Set placeholder first
-        venueCard.style.backgroundColor = 'var(--secondary-color)'; // Provide a fallback BG color
+        venueCard.style.backgroundImage = `url('${PLACEHOLDER_VENUE_IMAGE}')`;
+        venueCard.style.backgroundColor = 'var(--secondary-color)';
         venueCard.style.backgroundSize = 'cover';
         venueCard.style.backgroundPosition = 'center';
         if (venueData.image_url) {
             const imgTest = new Image();
-            imgTest.onload = () => {
-                // Only update if image loads successfully
-                venueCard.style.backgroundImage = `url('${venueData.image_url}')`;
-            };
-            imgTest.onerror = () => {
-                // Log error, placeholder/color remains
-                console.warn(`Venue card BG failed to load: ${venueData.image_url}. Using placeholder/fallback color.`);
-            };
-            imgTest.src = venueData.image_url; // Start loading the image
+            imgTest.onload = () => { venueCard.style.backgroundImage = `url('${venueData.image_url}')`; };
+            imgTest.onerror = () => { console.warn(`Venue card BG failed to load: ${venueData.image_url}. Using placeholder/fallback color.`); };
+            imgTest.src = venueData.image_url;
         }
 
-        // Choose Venue Card (#choose-venue-card)
         const chooseHeaderEl = chooseWrapper.querySelector(".venue-header");
-        const ratingEl = chooseWrapper.querySelector(".rating"); // The element containing star spans
-        const ratingTextEl = chooseWrapper.querySelector(".rating-text"); // Optional element for text like "Good"
-        const iconsContainer = chooseWrapper.querySelector(".venue-icons"); // The container for icons
+        const ratingEl = chooseWrapper.querySelector(".rating");
+        const ratingTextEl = chooseWrapper.querySelector(".rating-text");
+        const iconsContainer = chooseWrapper.querySelector(".venue-icons");
 
-        if (chooseHeaderEl) chooseHeaderEl.textContent = venueData.rating_text || "Venue Details"; // Use rating_text or fallback
-        if (ratingEl) {
-            const ratingValue = Math.round(venueData.rating_stars || 0);
-            const maxStars = 5; // Assuming a 5-star system
-            // Generate HTML for filled and empty stars
-            ratingEl.innerHTML = '<span class="filled">' + '★'.repeat(ratingValue) + '</span>' +
-                                 '☆'.repeat(maxStars - ratingValue);
-        }
-        if (ratingTextEl) { // Update the rating text if the element exists
-            ratingTextEl.textContent = venueData.rating_text || ''; // Use rating_text or empty string
-        }
-        if (iconsContainer) { // Populate the icons container
-            let iconsHTML = '';
-            // Add icons based on available data properties (adjust property names as needed)
-            if (venueData.venue_icon1) iconsHTML += `<span class="venue-icon-1">${venueData.venue_icon1}</span>`;
-            if (venueData.venue_icon2) iconsHTML += ` <span class="venue-icon-2">${venueData.venue_icon2}</span>`;
-            // Add more icons here if your data includes them (e.g., venue_icon3)
-            // Set the container's HTML. Use a non-breaking space if empty to prevent collapse.
-            iconsContainer.innerHTML = iconsHTML || ' ';
-        }
+        if (chooseHeaderEl) chooseHeaderEl.textContent = venueData.rating_text || "Venue Details";
+        if (ratingEl) { const rVal = Math.round(venueData.rating_stars || 0); const maxStars = 5; ratingEl.innerHTML = '<span class="filled">' + '★'.repeat(rVal) + '</span>' + '☆'.repeat(maxStars - rVal); }
+        if (ratingTextEl) { ratingTextEl.textContent = venueData.rating_text || ''; }
+        if (iconsContainer) { let iconsHTML = ''; if (venueData.venue_icon1) iconsHTML += `<span class="venue-icon-1">${venueData.venue_icon1}</span>`; if (venueData.venue_icon2) iconsHTML += ` <span class="venue-icon-2">${venueData.venue_icon2}</span>`; iconsContainer.innerHTML = iconsHTML || ' '; }
 
-        // --- Update Map & Dots ---
         updateVenueMap(venueData.latitude, venueData.longitude, venueData.name);
         updateDots(index);
-
-        // --- Player/Theme update logic is NOT here ---
     }
 
 
     // --- Event Handlers (Defined ONCE) ---
 
-    // Mousedown / Touchstart Handler
-    const handlePointerStart = (e) => {
-        // Prevent swipe initiation if the target is an interactive element or inside the map popup/controls
-        if (e.target.closest("button, input, a, .dots, .leaflet-control, .leaflet-marker-icon, .leaflet-popup")) {
-           console.log("Pointer start ignored on interactive element.");
-           isDragging = false; // Ensure dragging doesn't start
-           startX = null;      // Mark interaction as ignored for move/end handlers
-           return;
-        }
-        isDragging = false; // Reset drag state
-        startX = e.type.includes("mouse") ? e.clientX : e.touches[0].clientX;
-        startY = e.type.includes("mouse") ? e.clientY : e.touches[0].clientY; // Record Y for scroll detection
-        currentX = startX;
-        diffX = 0;
-        touchStartTime = Date.now(); // Record time for tap detection
-        cardWidth = venueCard.offsetWidth; // Get current width (might change on resize)
-
-        // Add class for visual feedback during swipe attempt (optional)
-        venueWrapper.classList.add("is-swiping");
-        chooseWrapper.classList.add("is-swiping");
-
-        // Don't preventDefault in touchstart yet, wait for touchmove to determine intent
-        // console.log(`Pointer start at X: ${startX}, Y: ${startY}`); // Can be verbose
+    const handlePointerStart = (e) => { // Unchanged
+        if (e.target.closest("button, input, a, .dots, .leaflet-control, .leaflet-marker-icon, .leaflet-popup")) { console.log("Pointer start ignored on interactive element."); isDragging = false; startX = null; return; }
+        isDragging = false; startX = e.type.includes("mouse") ? e.clientX : e.touches[0].clientX; startY = e.type.includes("mouse") ? e.clientY : e.touches[0].clientY; currentX = startX; diffX = 0; touchStartTime = Date.now(); cardWidth = venueCard.offsetWidth;
+        venueWrapper.classList.add("is-swiping"); chooseWrapper.classList.add("is-swiping");
     };
 
-    // Mousemove / Touchmove Handler
-    const handlePointerMove = (e) => {
-        // Only process if a valid pointer start occurred (startX is not null)
+    const handlePointerMove = (e) => { // Unchanged
         if (startX === null) return;
-
         currentX = e.type.includes("mouse") ? e.clientX : e.touches[0].clientX;
         const currentY = e.type.includes("mouse") ? e.clientY : e.touches[0].clientY;
-        diffX = currentX - startX;
-        const diffY = currentY - startY; // Calculate vertical difference
-
-        // Determine if it's a drag vs. scroll/tap attempt
-        if (!isDragging) {
-            // If vertical movement is significant and more dominant than horizontal, assume scrolling
-            if (Math.abs(diffY) > TAP_THRESHOLD_Y && Math.abs(diffY) > Math.abs(diffX) * 1.5) { // Added ratio check
-                console.log("Vertical scroll detected, canceling swipe.");
-                startX = null; // Reset start flag to ignore subsequent moves/ends for this interaction
-                // Remove visual feedback if swipe is cancelled
-                venueWrapper.classList.remove("is-swiping");
-                chooseWrapper.classList.remove("is-swiping");
-                return; // Stop processing this move event
-            }
-            // If horizontal movement exceeds threshold, start dragging
-            if (Math.abs(diffX) > TAP_THRESHOLD_X) {
-                 console.log("Dragging started.");
-                 isDragging = true;
-            }
-        }
-
-        // If dragging, update card transform and prevent vertical scroll on touch devices
-        if (isDragging) {
-            const transformValue = `translateX(${diffX}px)`;
-            venueWrapper.style.transform = transformValue;
-            chooseWrapper.style.transform = transformValue;
-            // Prevent default touch actions (like scrolling) ONLY when dragging horizontally
-            if (e.cancelable && e.type.includes("touch")) {
-                e.preventDefault();
-            }
-        }
+        diffX = currentX - startX; const diffY = currentY - startY;
+        if (!isDragging) { if (Math.abs(diffY) > TAP_THRESHOLD_Y && Math.abs(diffY) > Math.abs(diffX) * 1.5) { console.log("Vertical scroll detected, canceling swipe."); startX = null; venueWrapper.classList.remove("is-swiping"); chooseWrapper.classList.remove("is-swiping"); return; } if (Math.abs(diffX) > TAP_THRESHOLD_X) { console.log("Dragging started."); isDragging = true; } }
+        if (isDragging) { const tV = `translateX(${diffX}px)`; venueWrapper.style.transform = tV; chooseWrapper.style.transform = tV; if (e.cancelable && e.type.includes("touch")) e.preventDefault(); }
     };
 
-    // Mouseup / Touchend / Touchcancel / Mouseleave Handler
+    // Touchend / Mouseup / etc. Handler - WITH TypeError FIX
     const handlePointerEnd = (e) => {
-        // Only process if a valid pointer start occurred and wasn't cancelled (startX is not null)
-        if (startX === null) return;
+        if (startX === null) return; // Interaction was cancelled or ignored
 
         const touchDuration = Date.now() - touchStartTime;
-        // Use changedTouches for touchend, otherwise use client coordinates for mouseup/mouseleave
         const endX = e.type.includes("touch") ? (e.changedTouches[0]?.clientX ?? currentX) : e.clientX;
         const endY = e.type.includes("touch") ? (e.changedTouches[0]?.clientY ?? currentY) : e.clientY;
-        const finalDiffX = endX - startX; // Calculate final difference for accurate tap check
+        const finalDiffX = endX - startX;
         const finalDiffY = endY - startY;
 
-        // Determine if the interaction was a Tap
         const isTap = !isDragging &&
                       touchDuration < MAX_TAP_DURATION &&
                       Math.abs(finalDiffX) < TAP_THRESHOLD_X &&
                       Math.abs(finalDiffY) < TAP_THRESHOLD_Y;
 
-        console.log(`Pointer end. Drag: ${isDragging}, Dur: ${touchDuration}ms, dx: ${finalDiffX.toFixed(0)}, dy: ${finalDiffY.toFixed(0)}, Tap: ${isTap}`);
+        // console.log(`Pointer end. Drag: ${isDragging}, Dur: ${touchDuration}ms, dx: ${finalDiffX.toFixed(0)}, dy: ${finalDiffY.toFixed(0)}, Tap: ${isTap}`); // Verbose Log
 
         // --- Handle Tap ---
         if (isTap) {
-            console.log("[Tap] Tap detected on card!");
-            const targetCard = e.currentTarget; // The element the listener is attached to (venueCard or chooseVenueCard)
-            const venueId = targetCard.getAttribute('data-venue-id');
-            console.log("[Tap] Extracted Venue ID from tapped card:", venueId);
-            if (venueId) { // Check if ID is truthy (not null, undefined, or empty string)
-                navigateToVenueDetail(venueId); // <<< NAVIGATION CALL ON TAP
+            // *** FIX: Check if the event's currentTarget is actually one of the cards ***
+            // This prevents the error when the mouseup/touchend happens on the document
+            const targetCard = e.currentTarget;
+            if (targetCard === venueCard || targetCard === chooseVenueCard) {
+                console.log("[Tap] Tap detected on card:", targetCard.id);
+                const venueId = targetCard.getAttribute('data-venue-id'); // Now safe to call
+                console.log("[Tap] Extracted Venue ID from tapped card:", venueId);
+                if (venueId) {
+                    navigateToVenueDetail(venueId); // <<< NAVIGATION CALL ON TAP
+                } else {
+                    console.warn("[Tap] Could not navigate: data-venue-id was missing or empty on the tapped card:", targetCard.id);
+                }
             } else {
-                console.warn("[Tap] Could not navigate: data-venue-id was missing or empty on the tapped card:", targetCard);
+                 console.log("[Tap] Tap detected, but event target was not a card (likely document mouseup). Ignoring tap navigation.");
             }
-            // Snap back visually immediately (though navigation likely takes over)
+            // Snap back visually anyway
             venueWrapper.style.transform = `translateX(0px)`;
             chooseWrapper.style.transform = `translateX(0px)`;
         }
         // --- Handle Swipe ---
         else if (isDragging) {
             console.log("[Swipe] Swipe end processing.");
-            const threshold = cardWidth / 3; // Adjust threshold sensitivity (e.g., / 4 for less sensitive)
+            const threshold = cardWidth / 3;
             let newIndex = currentVenueIndex;
-
-            // Check swipe direction and boundaries
             if (diffX < -threshold && currentVenueIndex < fetchedVenueData.length - 1) {
                 newIndex++; console.log("Swipe Left -> new index:", newIndex);
             } else if (diffX > threshold && currentVenueIndex > 0) {
@@ -1011,125 +924,58 @@ function setupSwiperInteractions() {
                  console.log("Swipe did not cross threshold or at boundary.");
             }
 
-            // Animate the snap back to the center position
             venueWrapper.style.transition = "transform 0.3s ease-out";
             chooseWrapper.style.transition = "transform 0.3s ease-out";
             venueWrapper.style.transform = `translateX(0px)`;
             chooseWrapper.style.transform = `translateX(0px)`;
+            setTimeout(() => { venueWrapper.style.transition = ""; chooseWrapper.style.transition = ""; }, 300);
 
-            // Remove the transition after the animation completes to allow immediate dragging again
-            setTimeout(() => {
-                venueWrapper.style.transition = "";
-                chooseWrapper.style.transition = "";
-            }, 300);
-
-            // Update the displayed venue ONLY if the index actually changed
             if (newIndex !== currentVenueIndex) {
                 currentVenueIndex = newIndex;
-                displayVenue(currentVenueIndex); // Update card visuals, map, dots
+                displayVenue(currentVenueIndex);
             }
         }
-        // --- Handle Aborted Drag / Long Press / Other ---
+        // --- Handle Aborted Drag / Other ---
         else {
-            console.log("Pointer end: Not a swipe, not a tap (e.g., slow release, minimal move). Snapping back.");
-            // Just animate snap back without changing index or navigating
-            venueWrapper.style.transition = "transform 0.3s ease-out";
-            chooseWrapper.style.transition = "transform 0.3s ease-out";
-            venueWrapper.style.transform = `translateX(0px)`;
-            chooseWrapper.style.transform = `translateX(0px)`;
-            setTimeout(() => {
-                venueWrapper.style.transition = "";
-                chooseWrapper.style.transition = "";
-            }, 300);
+             // console.log("Pointer end: Not a swipe, not a tap. Snapping back."); // Verbose Log
+             venueWrapper.style.transition = "transform 0.3s ease-out";
+             chooseWrapper.style.transition = "transform 0.3s ease-out";
+             venueWrapper.style.transform = `translateX(0px)`;
+             chooseWrapper.style.transform = `translateX(0px)`;
+             setTimeout(() => { venueWrapper.style.transition = ""; chooseWrapper.style.transition = ""; }, 300);
         }
 
-        // --- Reset state variables for the next interaction ---
-        isDragging = false;
-        startX = null; // Use null to indicate the interaction sequence has ended
-        startY = null;
-        diffX = 0;
-        touchStartTime = 0;
-
-        // Remove visual feedback class
-        venueWrapper.classList.remove("is-swiping");
-        chooseWrapper.classList.remove("is-swiping");
+        // --- Reset state variables ---
+        isDragging = false; startX = null; startY = null; diffX = 0; touchStartTime = 0;
+        venueWrapper.classList.remove("is-swiping"); chooseWrapper.classList.remove("is-swiping");
     };
 
 
-    // --- Attach Event Listeners ONCE to the Card Elements ---
+    // --- Attach Event Listeners ONCE ---
     console.log("Attaching pointer/mouse/touch listeners ONCE to swiper cards.");
     [venueCard, chooseVenueCard].forEach(card => {
-        // Touch Events (Primary for Mobile)
-        card.addEventListener("touchstart", handlePointerStart, { passive: true }); // Passive: OK for start
-        card.addEventListener("touchmove", handlePointerMove, { passive: false }); // Active: Needed to preventDefault during drag
-        card.addEventListener("touchend", handlePointerEnd);
-        card.addEventListener("touchcancel", handlePointerEnd); // Handle cancellation (e.g., call incoming)
-
-        // Mouse Events (for Desktop)
+        card.addEventListener("touchstart", handlePointerStart, { passive: true });
+        card.addEventListener("touchmove", handlePointerMove, { passive: false });
+        card.addEventListener("touchend", handlePointerEnd); // Will have card as currentTarget
+        card.addEventListener("touchcancel", handlePointerEnd);
         card.addEventListener("mousedown", handlePointerStart);
-
-        // Explicit Click Listener (Fallback for Desktop / Accessibility)
-        // This ensures navigation happens even without touch/drag events,
-        // but tries to avoid double navigation after a tap.
-        card.addEventListener('click', (e) => {
-            // Check if the click should trigger navigation:
-            // 1. Was it NOT part of a drag gesture? (isDragging is false)
-            // 2. Was the movement minimal? (diffX check as safety)
-            // 3. Did the click happen on the card itself, not an inner interactive element?
-            if (!isDragging && Math.abs(diffX) < TAP_THRESHOLD_X) {
-                if (!e.target.closest("button, input, a, .dots, .leaflet-control, .leaflet-marker-icon, .leaflet-popup")) {
-                    // Check if pointerEnd recently handled a tap (difficult to track perfectly without flags)
-                    // For simplicity, assume if it wasn't dragging, a clean click should navigate.
-                    // Tap detection in pointerEnd should be the primary method.
-                    console.log("[Click Fallback] Click detected on card area (not during/after drag).");
-                    const targetCard = e.currentTarget;
-                    const venueId = targetCard.getAttribute('data-venue-id');
-                    console.log("[Click Fallback] Extracted Venue ID:", venueId);
-                    if (venueId) {
-                        navigateToVenueDetail(venueId);
-                    } else {
-                        console.warn("[Click Fallback] Could not navigate via click: data-venue-id missing.");
-                    }
-                } else {
-                   console.log("[Click Fallback] Click ignored (target was inner interactive element).");
-                }
-            } else {
-                // Click likely happened after a swipe/drag completed, pointerEnd handled it.
-                console.log("[Click Fallback] Click ignored (likely occurred after swipe finished).");
-            }
+        card.addEventListener('click', (e) => { // Click fallback (unchanged)
+            if (!isDragging && Math.abs(diffX) < TAP_THRESHOLD_X) { if (!e.target.closest("button, input, a, .dots, .leaflet-control, .leaflet-marker-icon, .leaflet-popup")) { console.log("[Click Fallback] Click detected on card area."); const targetCard = e.currentTarget; const venueId = targetCard.getAttribute('data-venue-id'); console.log("[Click Fallback] Extracted Venue ID:", venueId); if (venueId) navigateToVenueDetail(venueId); else console.warn("[Click Fallback] Could not navigate via click: data-venue-id missing."); } else { console.log("[Click Fallback] Click ignored (on inner interactive element)."); } } else { console.log("[Click Fallback] Click ignored (likely after swipe)."); }
         });
     });
 
     // Attach Move/End listeners to the document for MOUSE events
-    // This catches the mouse moving or being released *outside* the original card element during a drag.
     document.addEventListener("mousemove", handlePointerMove);
-    document.addEventListener("mouseup", handlePointerEnd);
-    // Handle mouse leaving the window during a drag
-    document.addEventListener("mouseleave", (e) => {
-       if (isDragging) { // Only trigger if currently dragging when mouse leaves
-           console.log("Mouse left window during drag, treating as pointer end.");
-           handlePointerEnd(e); // Trigger the end logic
-       }
-    });
+    document.addEventListener("mouseup", handlePointerEnd);     // Will have document as currentTarget if outside card
+    document.addEventListener("mouseleave", (e) => { if (isDragging) { console.log("Mouse left window during drag, treating as pointer end."); handlePointerEnd(e); } }); // Will have document as currentTarget
 
     // --- Initial Swiper Setup ---
-    setupCardWidth(); // Get initial card width
-    generateDots();   // Create dot indicators
-    displayVenue(currentVenueIndex); // Display the first venue (theme/player handled elsewhere)
+    setupCardWidth();
+    generateDots();
+    displayVenue(currentVenueIndex);
 
-    // --- Resize Handler ---
-    window.addEventListener("resize", () => {
-        console.log("Window resized.");
-        setupCardWidth(); // Recalculate card width
-        updateDots(currentVenueIndex); // Adjust dot scrolling
-        // Invalidate map size on resize for responsiveness
-        if (venueMapInstance) {
-           // Debounce/Throttle this if resize events fire rapidly and cause performance issues
-           setTimeout(() => {
-               if (venueMapInstance) venueMapInstance.invalidateSize();
-           }, 150); // Small delay to allow layout to settle
-        }
-    });
+    // --- Resize Handler --- (unchanged)
+    window.addEventListener("resize", () => { console.log("Window resized."); setupCardWidth(); updateDots(currentVenueIndex); if (venueMapInstance) { setTimeout(() => { if (venueMapInstance) venueMapInstance.invalidateSize(); }, 150); } });
 
 } // --- End of setupSwiperInteractions ---
 
@@ -1145,55 +991,9 @@ function setupChecklist() {
     if (checklistItems.length > 0) {
         console.log(`Found ${checklistItems.length} checklist items.`);
 
-        // Function to save the state of all checkboxes to localStorage
-        function saveChecklistState() {
-            const state = {};
-            checklistItems.forEach((item) => {
-                // Use item.id as the key for its state
-                if (item.id) {
-                    state[item.id] = item.checked;
-                } else {
-                    // Warn if a checkbox is missing an ID, as it won't be saved/loaded correctly
-                    console.warn("Checklist item missing ID, cannot save state:", item);
-                }
-            });
-            try {
-                localStorage.setItem(checklistKey, JSON.stringify(state));
-                // console.log("Checklist state saved."); // Can be verbose
-            } catch (e) {
-                console.error("Error saving checklist state to localStorage:", e);
-            }
-        }
-
-        // Function to load the state from localStorage and apply it to checkboxes
-        function loadChecklistState() {
-            const savedState = localStorage.getItem(checklistKey);
-            if (savedState) {
-                console.log("Loading checklist state from localStorage.");
-                try {
-                    const state = JSON.parse(savedState);
-                    checklistItems.forEach((item) => {
-                        // If the item has an ID and its state exists in the saved object
-                        if (item.id && state[item.id] !== undefined) {
-                            item.checked = state[item.id]; // Set the checkbox state
-                        }
-                    });
-                } catch (e) {
-                    console.error("Error parsing checklist state from localStorage:", e);
-                    // If parsing fails, remove the invalid item to prevent future errors
-                    localStorage.removeItem(checklistKey);
-                }
-            } else {
-                console.log("No saved checklist state found in localStorage.");
-            }
-        }
-
-        // Add event listener to each checkbox to save state on change
-        checklistItems.forEach((item) => {
-            item.addEventListener("change", saveChecklistState);
-        });
-
-        // Load the initial state when the page loads
+        function saveChecklistState() { const state = {}; checklistItems.forEach((item) => { if (item.id) { state[item.id] = item.checked; } else { console.warn("Checklist item missing ID, cannot save state:", item); } }); try { localStorage.setItem(checklistKey, JSON.stringify(state)); } catch (e) { console.error("Error saving checklist state to localStorage:", e); } }
+        function loadChecklistState() { const savedState = localStorage.getItem(checklistKey); if (savedState) { console.log("Loading checklist state from localStorage."); try { const state = JSON.parse(savedState); checklistItems.forEach((item) => { if (item.id && state[item.id] !== undefined) { item.checked = state[item.id]; } }); } catch (e) { console.error("Error parsing checklist state from localStorage:", e); localStorage.removeItem(checklistKey); } } else { console.log("No saved checklist state found in localStorage."); } }
+        checklistItems.forEach((item) => { item.addEventListener("change", saveChecklistState); });
         loadChecklistState();
 
     } else {
