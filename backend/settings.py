@@ -177,15 +177,12 @@ USE_TZ = True # Рекомендуется оставить True
 
 STATIC_URL = '/static/' # URL-префикс для статических файлов
 
-# Папки, ОТКУДА `collectstatic` будет брать ваши статические файлы (JS, CSS, HTML, assets)
 STATICFILES_DIRS = [
-    BASE_DIR / 'frontend', # Указываем на вашу папку с фронтендом
+    os.path.join(BASE_DIR, 'frontend'), 
 ]
 
-# Папка, КУДА `collectstatic` соберет ВСЕ статические файлы для production.
-# Whitenoise будет отдавать файлы из этой папки.
 STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles_build', 'static')
-# Хранилище для WhiteNoise (включает сжатие и вечное кэширование через манифест)
+
 STORAGES = {
     "staticfiles": {
         "BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage",
