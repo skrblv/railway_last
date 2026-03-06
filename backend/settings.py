@@ -40,21 +40,11 @@ DEBUG = os.environ.get('DJANGO_DEBUG', 'True') != 'False'
 
 # Домены, с которых разрешено обслуживать сайт
 ALLOWED_HOSTS = [
-    # Домен вашего приложения на Railway (замените, если отличается)
-    "railwaylast-production.up.railway.app",
-    # Домены для локальной разработки
-    "localhost",
-    "127.0.0.1",
-    "railway-last.vercel.app"
-    # Railway может предоставлять временные домены или использовать внутренние прокси,
-    # иногда требуется '*' в DEBUG режиме, но будьте осторожны с этим в production.
-    # Если DEBUG=False, '*' использовать НЕЛЬЗЯ.
+    'railway-last.vercel.app',
+    '.vercel.app',       # Точка в начале разрешает любой поддомен .vercel.app
+    'localhost',
+    '127.0.0.1',
 ]
-# Если DEBUG=True, можно временно добавить '*' для простоты локальной настройки,
-# но УБЕРИТЕ это для production:
-# if DEBUG:
-#     ALLOWED_HOSTS.append('*')
-
 
 # Настройки CORS (Cross-Origin Resource Sharing)
 # Определяет, какие внешние домены (например, ваш фронтенд на Vercel или Netlify)
@@ -79,7 +69,7 @@ CORS_ALLOWED_ORIGINS = [
 
 # Доверенные источники для CSRF защиты (важно, если frontend на другом домене)
 CSRF_TRUSTED_ORIGINS = [
-    "https://railwaylast-production.up.railway.app",
+    "https://railway-last.vercel.app",
     # Добавьте другие доверенные домены, если необходимо
 ]
 
