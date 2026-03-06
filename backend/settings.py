@@ -184,8 +184,7 @@ STATICFILES_DIRS = [
 
 # Папка, КУДА `collectstatic` соберет ВСЕ статические файлы для production.
 # Whitenoise будет отдавать файлы из этой папки.
-STATIC_ROOT = BASE_DIR / 'staticfiles'
-
+STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles_build', 'static')
 # Хранилище для WhiteNoise (включает сжатие и вечное кэширование через манифест)
 STORAGES = {
     "staticfiles": {
