@@ -38,8 +38,6 @@ But the work. The growth. The proof that I can build something from nothing.
 - [📡 Deployment](#-deployment)
 - [🐛 Troubleshooting](#-troubleshooting)
 - [📚 Additional Resources](#-additional-resources)
-- [🤝 Contributing](#-contributing)
-- [📄 License](#-license)
 
 ---
 
