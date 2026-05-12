@@ -29,15 +29,6 @@ But the work. The growth. The proof that I can build something from nothing.
 - [🏗️ Architecture](#️-architecture)
 - [📊 Tech Stack](#-tech-stack)
 - [🚀 Getting Started](#-getting-started)
-- [⚙️ Installation & Setup](#️-installation--setup)
-- [📁 Project Structure](#-project-structure)
-- [🔌 API Documentation](#-api-documentation)
-- [🗄️ Database Models](#️-database-models)
-- [🎨 Frontend Features](#-frontend-features)
-- [🔧 Configuration](#-configuration)
-- [📡 Deployment](#-deployment)
-- [🐛 Troubleshooting](#-troubleshooting)
-- [📚 Additional Resources](#-additional-resources)
 
 ---
 
